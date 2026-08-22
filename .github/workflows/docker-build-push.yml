@@ -1,4 +1,4 @@
-name: 前端 - 构建推送 DockerHub 镜像
+name: 前端 - 构建并推送 SWR 镜像及部署
 
 on:
   push:
@@ -11,183 +11,127 @@ on:
       - '.gitignore'
       - '.vscode/**'
       - '.image/**'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  REGISTRY: docker.io
-
-  # Docker Hub 仓库名
-  # 格式：dockerhub用户名/仓库名
-  IMAGE_NAME: eatsleeprun/yudao-ui-admin-vue3
+  REGISTRY: swr.cn-south-1.myhuaweicloud.com
+  SWR_ORGANIZATION: zhicang
+  IMAGE_NAME: swr.cn-south-1.myhuaweicloud.com/zhicang/yudao-ui
 
 jobs:
 
   # ─────────────────────────────────────────────
-  # 1. 代码检查
+  # Job 1: 应用编译与镜像打包
   # ─────────────────────────────────────────────
-  lint:
-    name: 代码检查
+  build:
+    name: 构建镜像并导出产物
     runs-on: ubuntu-latest
-
-    if: github.event_name != 'workflow_dispatch'
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: 配置 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: pnpm
-
-      - name: 安装依赖
-        run: pnpm install --frozen-lockfile
-
-  # ─────────────────────────────────────────────
-  # 2. 构建并推送镜像
-  # ─────────────────────────────────────────────
-  build-and-push:
-    name: 构建并推送镜像
-    runs-on: ubuntu-latest
-
-    needs: [lint]
-
-    if: always() && (needs.lint.result == 'success' || needs.lint.result == 'skipped')
-
-    outputs:
-      image_full: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-      image_tag: ${{ steps.meta.outputs.version }}
-
-    steps:
-
-      # ── 1. 检出代码 ─────────────────────────────
-      - name: 检出代码
-        uses: actions/checkout@v4
-
-      # ── 2. Docker Buildx ───────────────────────
       - name: 配置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # ── 3. 生成镜像元数据 ──────────────────────
       - name: 生成镜像元数据
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-
           tags: |
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=latest,enable=${{ github.ref_name == 'master' || github.ref_name == 'main' }}
-
           labels: |
             org.opencontainers.image.title=yudao-ui-admin-vue3
             org.opencontainers.image.description=芋道管理后台 Vue3
             org.opencontainers.image.revision=${{ github.sha }}
 
-      # ── 4. 登录 Docker Hub ─────────────────────
-      - name: 登录 Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # ── 5. 构建并推送 Docker 镜像 ───────────────
-      - name: 构建并推送 Docker 镜像
+      - name: 本地构建 Docker 镜像包
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-
-          push: true
-
+          push: false
+          outputs: type=docker,dest=/tmp/frontend.tar
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
           platforms: linux/amd64
-
-          # DockerHub Registry Cache
-          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}-cache:buildcache
-          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}-cache:buildcache,mode=max
-
-          # 提升推送速度
           provenance: false
           sbom: false
 
-      # ── 6. 输出摘要 ─────────────────────────────
-      - name: 输出构建结果
-        run: |
-          echo "## 🚀 镜像推送成功" >> $GITHUB_STEP_SUMMARY
-          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
-          echo "| 镜像 | \`${{ env.IMAGE_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Git SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+      - name: 上传离线镜像产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-image
+          path: /tmp/frontend.tar
+          retention-days: 1
 
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+  # ─────────────────────────────────────────────
+  # Job 2: 推送到华为云 SWR 镜像服务
+  # ─────────────────────────────────────────────
+  push:
+    name: 推送镜像至 SWR
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 下载离线镜像产物
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-image
+          path: /tmp
+
+      - name: 加载镜像到本地引擎
+        run: |
+          docker load --input /tmp/frontend.tar
+
+      - name: 登录华为云 SWR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.SWR_USERNAME }}
+          password: ${{ secrets.SWR_PASSWORD }}
+
+      - name: 推送镜像至 SWR
+        run: |
+          docker push --all-tags ${{ env.IMAGE_NAME }}
+
+  # ─────────────────────────────────────────────
+  # Job 3: 服务器密码登录与自动部署
+  # ─────────────────────────────────────────────
   deploy:
     name: 部署到服务器
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: push
+
     if: github.ref_name == 'master' || github.ref_name == 'main'
+
     steps:
       - name: SSH 远程部署
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SERVER_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          username: ${{ secrets.SERVER_USER || secrets.SERVER_USERNAME || 'root' }}
+          password: ${{ secrets.SERVER_PASSWORD }}
           request_pty: true
           script: |
-            cd /opt/deployments
-
-            echo "▶ 拉取最新镜像"
+            cd /opt/1panel/docker/compose/zhicang
+            sudo docker login -u ${{ secrets.SWR_USERNAME }} -p ${{ secrets.SWR_PASSWORD }} ${{ env.REGISTRY }}
             sudo docker compose pull yudao-ui
-
-            echo "▶ 重启服务"
             sudo docker compose up -d yudao-ui
-
-            echo "▶ 清理旧镜像"
             sudo docker image prune -f
-
-            echo "✅ 前端部署完成"
 
       - name: 输出部署结果
         run: |
           echo "## ✅ 前端部署成功" >> $GITHUB_STEP_SUMMARY
           echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
-          echo "| 镜像 | \`docker.io/eatsleeprun/yudao-ui-admin-vue3:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 镜像 | \`${{ env.IMAGE_NAME }}:latest\` |" >> $GITHUB_STEP_SUMMARY
           echo "| 服务器 | \`${{ secrets.SERVER_HOST }}\` |" >> $GITHUB_STEP_SUMMARY
-  # ─────────────────────────────────────────────
-  # 3. 通知（可选）
-  # ─────────────────────────────────────────────
-  notify:
-    name: 通知
-    runs-on: ubuntu-latest
 
-    needs: [build-and-push]
-
-    if: always()
-
-    steps:
-      - name: 成功通知
-        if: needs.build-and-push.result == 'success'
-        run: |
-          echo "✅ 构建成功：${{ needs.build-and-push.outputs.image_full }}"
-
-      - name: 失败通知
-        if: needs.build-and-push.result == 'failure'
-        run: |
-          echo "❌ 构建失败，请检查 Actions 日志"
