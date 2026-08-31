@@ -1,7 +1,7 @@
 <!--
   水洗标打印预览弹窗
   每个结构生成 1 张水洗标，标签尺寸 50mm × 80mm（竖版）
-  从上到下：单号、客户、位置、套数、结构属性、用料、订单二维码
+  从上到下：品牌名称、单号、客户、位置、套数、结构属性、用料、品牌电话和地址
   父组件通过 open(formData) 方法打开
 -->
 <template>
@@ -21,7 +21,7 @@
 
     <!-- 预览区：三列网格展示（每标签竖版较窄） -->
     <div style="background: #e8e8e8; padding: 20px 20px; max-height: 78vh; overflow-y: auto;">
-      <div v-loading="loading" element-loading-text="正在生成二维码...">
+      <div v-loading="loading" element-loading-text="正在加载...">
         <template v-if="labelItems.length">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(50mm, 50mm)); gap: 14px; justify-content: center; max-width: 100%; margin: 0 auto;">
             <div
@@ -106,10 +106,16 @@
                 <div v-else style="font-size:9px; color:#bbb;">（无用料）</div>
               </div>
 
-              <!-- 底部二维码 + 序号 -->
-              <div style="border-top:1px solid #eee; padding-top:4px; display:flex; flex-direction:column; align-items:center; gap:2px;">
-                <img v-if="item.qrUrl" :src="item.qrUrl" width="40" height="40" style="display:block;" />
-                <div v-else style="width:40px;height:40px;border:1px dashed #bbb;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:9px;">二维码</div>
+              <!-- 底部品牌电话和地址 -->
+              <div style="border-top: 1px solid #eee; padding-top: 4px; margin-top: auto; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #333;">
+                <div style="display: flex; gap: 2px; line-height: 1.4;">
+                  <span style="color: #888; white-space: nowrap;">电话：</span>
+                  <span style="font-weight: 600; word-break: break-all;">{{ brandPhone }}</span>
+                </div>
+                <div style="display: flex; gap: 2px; line-height: 1.4;">
+                  <span style="color: #888; white-space: nowrap;">地址：</span>
+                  <span style="font-weight: 600; word-break: break-all;">{{ brandAddress }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -125,10 +131,10 @@
 </template>
 
 <script setup lang="ts">
-import QRCode from 'qrcode'
 import { getDictLabel, DICT_TYPE } from '@/utils/dict'
 import type { CustomerSimpleVO } from '@/api/zc/customer'
-import type { BrandSimpleVO } from '@/api/zc/brand'
+import type { BrandSimpleVO, Brand } from '@/api/zc/brand'
+import { BrandApi } from '@/api/zc/brand'
 import type { CurtainSimpleVO } from '@/api/zc/curtain'
 import type { CurtainStructureSimpleVO } from '@/api/zc/curtainstructure'
 import type { SalesOrder, SalesOrderCurtain, SalesOrderStructure, ZCSalesOrderMaterial } from '@/api/zc/salesorder'
@@ -151,7 +157,6 @@ interface LabelItem {
   structureSeq: number  // 结构序号
   attrs: { label: string; value: string }[] // 结构属性列表
   materials: { elementName: string; productName: string; quantity?: number }[]
-  qrUrl: string         // 订单二维码 DataURL
 }
 
 // ======================== Props ========================
@@ -168,12 +173,17 @@ const loading = ref(false)
 const formData = ref<FormDataType | null>(null)
 /** 展开后的所有标签项（每个结构 1 张） */
 const labelItems = ref<LabelItem[]>([])
+/** 品牌详情（底部展示电话、地址） */
+const brandDetail = ref<Brand | null>(null)
 
 // ======================== 计算属性 ========================
 const brandName = computed(() => {
   if (!formData.value?.brandId) return ''
   return props.brandsList.find((item) => item.id === formData.value!.brandId)?.name || ''
 })
+
+const brandPhone = computed(() => brandDetail.value?.mobile || '-')
+const brandAddress = computed(() => brandDetail.value?.address || '-')
 
 // ======================== 查找辅助函数 ========================
 const getCurtainName = (id?: number): string => {
@@ -218,15 +228,22 @@ const buildAttrs = (structure: any): { label: string; value: string }[] => {
 }
 
 // ======================== 对外方法 ========================
-/** 打开预览弹窗，传入当前表单数据，异步生成订单二维码 */
+/** 打开预览弹窗，传入当前表单数据 */
 const open = async (data: FormDataType) => {
   formData.value = data
   labelItems.value = []
+  brandDetail.value = null
   visible.value = true
   loading.value = true
   try {
-    // 每个订单只生成一张二维码，所有标签共用
-    const qrUrl = await QRCode.toDataURL(data.orderNo || String(data.id || ''), { width: 80, margin: 1 })
+    if (data.brandId) {
+      try {
+        brandDetail.value = await BrandApi.getBrand(data.brandId)
+      } catch (e) {
+        console.error('获取品牌详情失败', e)
+        brandDetail.value = null
+      }
+    }
 
     const customerName = getCustomerName(data.customerId)
     const orderNo = data.orderNo || '-'
@@ -253,8 +270,7 @@ const open = async (data: FormDataType) => {
           totalCurtains,
           structureSeq: sIdx + 1,
           attrs,
-          materials,
-          qrUrl
+          materials
         })
       }
     }
@@ -269,12 +285,14 @@ defineExpose({ open })
 // ======================== 打印 ========================
 /**
  * 在新窗口生成水洗标 HTML，每个结构 1 张（50mm × 80mm），自动触发打印对话框。
- * 布局从上到下：单号、客户、位置、套数、结构属性、用料、订单二维码。
+ * 布局从上到下：品牌名称、单号、客户、位置、套数、结构属性、用料、品牌电话和地址。
  */
 const handlePrint = () => {
   if (!formData.value || !labelItems.value.length) return
 
   const bName = brandName.value
+  const bPhone = brandPhone.value
+  const bAddress = brandAddress.value
 
   const labelHtmlList = labelItems.value.map((item) => {
     const attrsHtml = item.attrs
@@ -303,10 +321,6 @@ const handlePrint = () => {
         </div>`
       : '<div style="font-size:7pt;color:#bbb;">（无用料）</div>'
 
-    const qrImg = item.qrUrl
-      ? `<img src="${item.qrUrl}" width="44" height="44" style="display:block;" />`
-      : `<div style="width:44px;height:44px;border:1px dashed #bbb;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:7pt;">二维码</div>`
-
     return `
       <div class="label">
         <div class="brand">
@@ -317,13 +331,14 @@ const handlePrint = () => {
         <div class="info-row"><span class="lbl">单号：</span><span class="val">${item.orderNo}</span></div>
         <div class="info-row"><span class="lbl">客户：</span><span class="val">${item.customerName}</span></div>
         <div class="info-row"><span class="lbl">位置：</span><span class="val">${item.room}</span></div>
-        <div class="info-row sep"><span class="lbl">套数：</span><span class="val">第${item.curtainSeq}套/共${item.totalCurtains}套</span>
+        <div class="info-row sep"><span class="lbl">套数：</span><span class="val">第${item.curtainSeq}套/共${item.totalCurtains}套</span></div>
         <div class="attrs">${attrsHtml}</div>
         <div class="mats">
           ${materialsHtml}
         </div>
-        <div class="qr-row">
-          ${qrImg}
+        <div class="brand-footer">
+          <div class="footer-row"><span class="lbl">电话：</span><span class="val-foot">${bPhone}</span></div>
+          <div class="footer-row"><span class="lbl">地址：</span><span class="val-foot">${bAddress}</span></div>
         </div>
       </div>`
   })
@@ -398,14 +413,25 @@ const handlePrint = () => {
     .mat-head .mat-pn, .mat-row .mat-pn { white-space: normal; word-break: break-all; }
     .mat-pn { font-weight: 600; }
     .right { text-align: center; justify-self: center; }
-    .qr-row {
+    .brand-footer {
       border-top: 0.5pt solid #ddd;
       padding-top: 1.5mm;
       margin-top: auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 1.5px;
+      gap: 0.8mm;
+    }
+    .footer-row {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      line-height: 1.3;
+      font-size: 9.5pt;
+    }
+    .val-foot {
+      font-weight: 600;
+      color: #1a1a1a;
+      word-break: break-all;
     }
   </style>
 </head>
