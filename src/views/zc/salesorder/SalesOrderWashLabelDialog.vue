@@ -1,6 +1,6 @@
 <!--
   水洗标打印预览弹窗
-  每个结构生成 1 张水洗标，标签尺寸 50mm × 80mm（竖版）
+  每个结构生成 1 张水洗标，标签尺寸 50mm × 120mm（竖版）
   从上到下：品牌名称、单号、客户、位置、套数、结构属性、用料、品牌电话和地址
   父组件通过 open(formData) 方法打开
 -->
@@ -19,7 +19,7 @@
       </div>
     </template>
 
-    <!-- 预览区：三列网格展示（每标签竖版较窄） -->
+    <!-- 预览区：三列网格展示（每标签竖版，尺寸 50mm × 120mm） -->
     <div style="background: #e8e8e8; padding: 20px 20px; max-height: 78vh; overflow-y: auto;">
       <div v-loading="loading" element-loading-text="正在加载...">
         <template v-if="labelItems.length">
@@ -27,94 +27,75 @@
             <div
               v-for="(item, idx) in labelItems"
               :key="idx"
-              style="
-                background: white;
-                width: 50mm;
-                max-width: 50mm;
-                padding: 6px 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-                font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-                color: #1a1a1a;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                border: 1px solid #ddd;
-                font-size: 10px;
-                overflow: hidden;
-                padding-bottom: 20px;
-              "
+              class="wash-label-card preview-card"
             >
-              <div style="display:flex; flex-direction:column; gap:6px; margin-top:20px; margin-bottom:10px;">
-                <div style="border-top:1px dashed #9a9a9a;"></div>
-                <div style="text-align:center; font-size:18px; font-weight:800; line-height:1.1; color:#111; margin-top:2px;">
-                  {{ brandName || '品牌名称' }}
-                </div>
+              <div class="wash-label-brand">
+                <div class="wash-label-brand-line"></div>
+                <div class="wash-label-brand-name">{{ brandName || '品牌名称' }}</div>
               </div>
 
               <!-- 单号 -->
-              <div style="display:flex; gap:4px; line-height:1.8;">
-                <span style="color:#888; white-space:nowrap; font-size:13px;">单号：</span>
-                <span style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;">{{ item.orderNo }}</span>
+              <div class="wash-label-info-row">
+                <span class="wash-label-lbl">单号：</span>
+                <span class="wash-label-val">{{ item.orderNo }}</span>
               </div>
 
               <!-- 客户 -->
-              <div style="display:flex; gap:4px; line-height:1.8;">
-                <span style="color:#888; white-space:nowrap; font-size:13px;">客户：</span>
-                <span style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;">{{ item.customerName }}</span>
+              <div class="wash-label-info-row">
+                <span class="wash-label-lbl">客户：</span>
+                <span class="wash-label-val">{{ item.customerName }}</span>
               </div>
 
               <!-- 位置 -->
-              <div style="display:flex; gap:4px; line-height:1.8;">
-                <span style="color:#888; white-space:nowrap; font-size:13px;">位置：</span>
-                <span style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;">{{ item.room || '-' }}</span>
+              <div class="wash-label-info-row">
+                <span class="wash-label-lbl">位置：</span>
+                <span class="wash-label-val">{{ item.room || '-' }}</span>
               </div>
 
               <!-- 套数 -->
-              <div style="display:flex; gap:4px; line-height:1.8; border-bottom:1px solid #eee; padding-bottom:3px; margin-bottom:3px;">
-                <span style="color:#888; white-space:nowrap; font-size:13px;">套数：</span>
-                <span style="font-weight:700; white-space:nowrap; font-size:13px;">第{{ item.curtainSeq }}套/共{{ item.totalCurtains }}套</span>
-                <!-- <span style="color:#888; margin-left:4px; white-space:nowrap; font-size:11px;">结构：{{ item.structureSeq }}</span> -->
+              <div class="wash-label-info-row sep">
+                <span class="wash-label-lbl">套数：</span>
+                <span class="wash-label-val">第{{ item.curtainSeq }}套/共{{ item.totalCurtains }}套</span>
               </div>
 
               <!-- 结构属性 -->
-              <div style="flex-shrink:0; margin-bottom:3px;">
-                <div v-for="(attr, aIdx) in item.attrs" :key="aIdx" style="display:flex; gap:4px; line-height:1.6; font-size:12px;">
-                  <span style="color:#888; white-space:nowrap;">{{ attr.label }}：</span>
-                  <span style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ attr.value }}</span>
+              <div class="wash-label-attrs">
+                <div v-for="(attr, aIdx) in item.attrs" :key="aIdx" class="wash-label-info-row">
+                  <span class="wash-label-lbl">{{ attr.label }}：</span>
+                  <span class="wash-label-val">{{ attr.value }}</span>
                 </div>
               </div>
 
               <!-- 用料 -->
-              <div style="flex:1; overflow:hidden; border-top:1px solid #eee; padding-top:3px; margin-bottom:3px;">
-                <!-- <div style="font-size:10px; color:#888; margin-bottom:2px;">用料</div> -->
-                <div v-if="item.materials.length" style="width:100%; font-size:11px; border:1px dashed #bdbdbd; border-collapse:collapse;">
-                  <div style="display:grid; grid-template-columns: 1.2fr 1.8fr 0.7fr; background:#f7f7f7; color:#666; font-weight:600; border-bottom:1px dashed #bdbdbd;">
-                    <span style="padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px;">名称</span>
-                    <span style="padding:1px 3px; white-space:normal; overflow:hidden; word-break:break-all; text-align:center; font-size:11px;">产品</span>
-                    <span style="padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; font-size:11px;">数量</span>
+              <div class="wash-label-mats">
+                <div v-if="item.materials.length" class="wash-label-mat-table">
+                  <div class="wash-label-mat-head">
+                    <span>名称</span>
+                    <span style="text-align:center;">产品</span>
+                    <span class="wash-label-right">数量</span>
                   </div>
                   <div
                     v-for="(m, mIdx) in item.materials"
                     :key="mIdx"
-                    style="display:grid; grid-template-columns: 1.2fr 1.8fr 0.7fr; border-bottom:1px dashed #d9d9d9; color:#333; font-size:11px;"
+                    class="wash-label-mat-row"
                   >
-                    <span style="padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.elementName || '-' }}</span>
-                    <span style="padding:1px 3px; white-space:normal; overflow:hidden; word-break:break-all; font-weight:600; line-height:1.2; text-align:center;">{{ m.productName || '-' }}</span>
-                    <span style="padding:1px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">{{ m.quantity ?? '-' }}</span>
+                    <span>{{ m.elementName || '-' }}</span>
+                    <span class="wash-label-mat-pn">{{ m.productName || '-' }}</span>
+                    <span class="wash-label-right">{{ m.quantity ?? '-' }}</span>
                   </div>
                 </div>
-                <div v-else style="font-size:9px; color:#bbb;">（无用料）</div>
+                <div v-else class="wash-label-no-mat">（无用料）</div>
               </div>
 
               <!-- 底部品牌电话和地址 -->
-              <div style="border-top: 1px solid #eee; padding-top: 4px; margin-top: auto; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #333;">
-                <div style="display: flex; gap: 2px; line-height: 1.4;">
-                  <span style="color: #888; white-space: nowrap;">电话：</span>
-                  <span style="font-weight: 600; word-break: break-all;">{{ brandPhone }}</span>
+              <div class="wash-label-footer">
+                <div class="wash-label-footer-row">
+                  <span class="wash-label-footer-lbl">电话：</span>
+                  <span class="wash-label-val-foot">{{ brandPhone }}</span>
                 </div>
-                <div style="display: flex; gap: 2px; line-height: 1.4;">
-                  <span style="color: #888; white-space: nowrap;">地址：</span>
-                  <span style="font-weight: 600; word-break: break-all;">{{ brandAddress }}</span>
+                <div class="wash-label-footer-row">
+                  <span class="wash-label-footer-lbl">地址：</span>
+                  <span class="wash-label-val-foot">{{ brandAddress }}</span>
                 </div>
               </div>
             </div>
@@ -139,7 +120,7 @@ import type { CurtainSimpleVO } from '@/api/zc/curtain'
 import type { CurtainStructureSimpleVO } from '@/api/zc/curtainstructure'
 import type { SalesOrder, SalesOrderCurtain, SalesOrderStructure, ZCSalesOrderMaterial } from '@/api/zc/salesorder'
 
-/** 水洗标打印预览弹窗（每个结构生成 1 张标签，50mm × 80mm） */
+/** 水洗标打印预览弹窗（每个结构生成 1 张标签，50mm × 120mm） */
 defineOptions({ name: 'SalesOrderWashLabelDialog' })
 
 // ======================== 类型定义 ========================
@@ -283,10 +264,6 @@ const open = async (data: FormDataType) => {
 defineExpose({ open })
 
 // ======================== 打印 ========================
-/**
- * 在新窗口生成水洗标 HTML，每个结构 1 张（50mm × 80mm），自动触发打印对话框。
- * 布局从上到下：品牌名称、单号、客户、位置、套数、结构属性、用料、品牌电话和地址。
- */
 const handlePrint = () => {
   if (!formData.value || !labelItems.value.length) return
 
@@ -296,49 +273,46 @@ const handlePrint = () => {
 
   const labelHtmlList = labelItems.value.map((item) => {
     const attrsHtml = item.attrs
-      .map((a) => `<div class="info-row"><span class="lbl">${a.label}：</span><span class="val">${a.value}</span></div>`)
+      .map((a) => `<div class="wash-label-info-row"><span class="wash-label-lbl">${a.label}：</span><span class="wash-label-val">${a.value}</span></div>`)
       .join('')
 
     const materialsHtml = item.materials.length
       ? `
-        <div class="mat-table">
-          <div class="mat-head">
+        <div class="wash-label-mat-table">
+          <div class="wash-label-mat-head">
             <span>名称</span>
-            <span>产品</span>
-            <span class="right">数量</span>
+            <span style="text-align:center;">产品</span>
+            <span class="wash-label-right">数量</span>
           </div>
           ${item.materials
             .map(
               (m) => `
-                <div class="mat-row">
+                <div class="wash-label-mat-row">
                   <span>${m.elementName || '-'}</span>
-                  <span class="mat-pn">${m.productName || '-'}</span>
-                  <span class="right">${m.quantity ?? '-'}</span>
+                  <span class="wash-label-mat-pn">${m.productName || '-'}</span>
+                  <span class="wash-label-right">${m.quantity ?? '-'}</span>
                 </div>
               `
             )
             .join('')}
         </div>`
-      : '<div style="font-size:7pt;color:#bbb;">（无用料）</div>'
+      : '<div class="wash-label-no-mat">（无用料）</div>'
 
     return `
-      <div class="label">
-        <div class="brand">
-          <div class="brand-line"></div>
-          <div class="brand-name">${bName || '品牌名称'}</div>
-          <div class="brand-line"></div>
+      <div class="wash-label-card">
+        <div class="wash-label-brand">
+          <div class="wash-label-brand-line"></div>
+          <div class="wash-label-brand-name">${bName || '品牌名称'}</div>
         </div>
-        <div class="info-row"><span class="lbl">单号：</span><span class="val">${item.orderNo}</span></div>
-        <div class="info-row"><span class="lbl">客户：</span><span class="val">${item.customerName}</span></div>
-        <div class="info-row"><span class="lbl">位置：</span><span class="val">${item.room}</span></div>
-        <div class="info-row sep"><span class="lbl">套数：</span><span class="val">第${item.curtainSeq}套/共${item.totalCurtains}套</span></div>
-        <div class="attrs">${attrsHtml}</div>
-        <div class="mats">
-          ${materialsHtml}
-        </div>
-        <div class="brand-footer">
-          <div class="footer-row"><span class="lbl">电话：</span><span class="val-foot">${bPhone}</span></div>
-          <div class="footer-row"><span class="lbl">地址：</span><span class="val-foot">${bAddress}</span></div>
+        <div class="wash-label-info-row"><span class="wash-label-lbl">单号：</span><span class="wash-label-val">${item.orderNo}</span></div>
+        <div class="wash-label-info-row"><span class="wash-label-lbl">客户：</span><span class="wash-label-val">${item.customerName}</span></div>
+        <div class="wash-label-info-row"><span class="wash-label-lbl">位置：</span><span class="wash-label-val">${item.room || '-'}</span></div>
+        <div class="wash-label-info-row sep"><span class="wash-label-lbl">套数：</span><span class="wash-label-val">第${item.curtainSeq}套/共${item.totalCurtains}套</span></div>
+        <div class="wash-label-attrs">${attrsHtml}</div>
+        <div class="wash-label-mats">${materialsHtml}</div>
+        <div class="wash-label-footer">
+          <div class="wash-label-footer-row"><span class="wash-label-footer-lbl">电话：</span><span class="wash-label-val-foot">${bPhone}</span></div>
+          <div class="wash-label-footer-row"><span class="wash-label-footer-lbl">地址：</span><span class="wash-label-val-foot">${bAddress}</span></div>
         </div>
       </div>`
   })
@@ -349,90 +323,47 @@ const handlePrint = () => {
   <meta charset="utf-8">
   <title>${bName ? bName + ' ' : ''}水洗标 - ${formData.value.orderNo || ''}</title>
   <style>
-    @page { size: 50mm 80mm; margin: 0; }
+    @page { size: 50mm 120mm; margin: 0; }
     * { box-sizing: border-box; font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif; }
-    body { margin: 0; padding: 20px 20px; color: #1a1a1a; font-size: 8.5pt; }
-    .label {
+    html, body { margin: 0; padding: 0; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .wash-label-card {
       width: 50mm;
-      min-height: 80mm;
-      height: auto;
+      height: 120mm;
+      min-height: 120mm;
+      box-sizing: border-box;
       padding: 2mm 2.5mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
       page-break-after: always;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
-      padding-bottom: 20px;
     }
-    .label:last-child { page-break-after: auto; }
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 1.8mm;
-      margin-top: 20px;
-      margin-bottom: 10px;
-    }
-    .brand-line {
-      border-top: 0.5pt dashed #9a9a9a;
-    }
-    .brand-name {
-      text-align: center;
-      font-size: 15pt;
-      font-weight: 800;
-      line-height: 1.1;
-      color: #111;
-    }
-    .info-row {
-      display: flex;
-      align-items: baseline;
-      gap: 3px;
-      line-height: 1.7;
-    }
-    .info-row.sep {
-      border-bottom: 0.5pt solid #ddd;
-      padding-bottom: 1mm;
-      margin-bottom: 1mm;
-    }
-    .lbl { color: #777; white-space: nowrap; font-size: 11pt; }
-    .val { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11pt; }
-    .attrs { flex-shrink: 0; }
-    .attrs .info-row { font-size: 11pt; line-height: 1.55; }
-    .mats {
-      flex: 1;
-      overflow: hidden;
-      border-top: 0.5pt solid #ddd;
-      padding-top: 1mm;
-      margin-top: 1mm;
-    }
-    .sec-title { font-size: 10.5pt; color: #888; margin-bottom: 0.5mm; }
-    .mat-table { width: 100%; border: 0.5pt dashed #bdbdbd; font-size: 10.5pt; }
-    .mat-head, .mat-row { display: grid; grid-template-columns: 1.2fr 1.8fr 0.7fr; }
-    .mat-head { background: #f7f7f7; color: #666; font-weight: 600; border-bottom: 0.5pt dashed #bdbdbd; }
-    .mat-row { color: #333; border-bottom: 0.5pt dashed #d9d9d9; }
-    .mat-row:last-child { border-bottom: 0; }
-    .mat-head span, .mat-row span { padding: 0.4mm 0.7mm; overflow: hidden; text-overflow: ellipsis; }
-    .mat-head .mat-pn, .mat-row .mat-pn { white-space: normal; word-break: break-all; }
-    .mat-pn { font-weight: 600; }
-    .right { text-align: center; justify-self: center; }
-    .brand-footer {
-      border-top: 0.5pt solid #ddd;
-      padding-top: 1.5mm;
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.8mm;
-    }
-    .footer-row {
-      display: flex;
-      align-items: baseline;
-      gap: 2px;
-      line-height: 1.3;
-      font-size: 9.5pt;
-    }
-    .val-foot {
-      font-weight: 600;
-      color: #1a1a1a;
-      word-break: break-all;
-    }
+    .wash-label-card:last-child { page-break-after: auto; }
+    .wash-label-brand { display: flex; flex-direction: column; gap: 4px; margin-bottom: 2mm; flex-shrink: 0; }
+    .wash-label-brand-line { border-top: 1px dashed #9a9a9a; }
+    .wash-label-brand-name { text-align: center; font-size: 16px; font-weight: 800; color: #111111; margin-top: 2px; }
+    .wash-label-info-row { display: flex; align-items: baseline; gap: 4px; line-height: 1.5; font-size: 12px; }
+    .wash-label-info-row.sep { border-bottom: 1px solid #eeeeee; padding-bottom: 2px; margin-bottom: 2px; }
+    .wash-label-lbl { color: #777777; white-space: nowrap; }
+    .wash-label-val { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wash-label-attrs { margin-bottom: 2px; }
+    .wash-label-attrs .wash-label-info-row { font-size: 11px; line-height: 1.4; }
+    .wash-label-attrs .wash-label-val { font-weight: 600; }
+    .wash-label-mats { border-top: 1px solid #eeeeee; padding-top: 2px; }
+    .wash-label-mat-table { width: 100%; border: 1px dashed #bdbdbd; font-size: 10px; border-collapse: collapse; }
+    .wash-label-mat-head, .wash-label-mat-row { display: grid; grid-template-columns: 1.2fr 1.8fr 0.7fr; }
+    .wash-label-mat-head { background: #f7f7f7; color: #666666; font-weight: 600; border-bottom: 1px dashed #bdbdbd; }
+    .wash-label-mat-row { color: #333333; border-bottom: 1px dashed #d9d9d9; }
+    .wash-label-mat-row:last-child { border-bottom: none; }
+    .wash-label-mat-head span, .wash-label-mat-row span { padding: 1px 3px; overflow: hidden; text-overflow: ellipsis; }
+    .wash-label-mat-pn { white-space: normal; word-break: break-all; font-weight: 600; text-align: center; }
+    .wash-label-right { text-align: center; }
+    .wash-label-no-mat { font-size: 9px; color: #bbbbbb; }
+    .wash-label-footer { border-top: 1px solid #eeeeee; padding-top: 3px; margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 10.5px; color: #333333; }
+    .wash-label-footer-row { display: flex; align-items: baseline; gap: 2px; }
+    .wash-label-footer-lbl { color: #777777; white-space: nowrap; }
+    .wash-label-val-foot { font-weight: 600; color: #1a1a1a; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -453,3 +384,167 @@ const handlePrint = () => {
   }, 400)
 }
 </script>
+
+<style scoped>
+.wash-label-card {
+  width: 50mm;
+  height: 120mm;
+  min-height: 120mm;
+  box-sizing: border-box;
+  padding: 2mm 2.5mm;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+.wash-label-card.preview-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  border: 1px solid #dddddd;
+}
+.wash-label-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 0;
+  margin-bottom: 2mm;
+  flex-shrink: 0;
+}
+.wash-label-brand-line {
+  border-top: 1px dashed #9a9a9a;
+}
+.wash-label-brand-name {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #111111;
+  margin-top: 2px;
+}
+.wash-label-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1.5;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.wash-label-info-row.sep {
+  border-bottom: 1px solid #eeeeee;
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+.wash-label-lbl {
+  color: #777777;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.wash-label-val {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.wash-label-attrs {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+.wash-label-attrs .wash-label-info-row {
+  font-size: 11px;
+  line-height: 1.45;
+}
+.wash-label-attrs .wash-label-lbl {
+  font-size: 11px;
+}
+.wash-label-attrs .wash-label-val {
+  font-size: 11px;
+  font-weight: 600;
+}
+.wash-label-mats {
+  border-top: 1px solid #eeeeee;
+  padding-top: 2px;
+  margin-bottom: 2px;
+}
+.wash-label-mat-table {
+  width: 100%;
+  border: 1px dashed #bdbdbd;
+  font-size: 10.5px;
+  border-collapse: collapse;
+}
+.wash-label-mat-head,
+.wash-label-mat-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.8fr 0.7fr;
+}
+.wash-label-mat-head {
+  background: #f7f7f7;
+  color: #666666;
+  font-weight: 600;
+  border-bottom: 1px dashed #bdbdbd;
+}
+.wash-label-mat-row {
+  color: #333333;
+  border-bottom: 1px dashed #d9d9d9;
+}
+.wash-label-mat-row:last-child {
+  border-bottom: none;
+}
+.wash-label-mat-head span,
+.wash-label-mat-row span {
+  padding: 1px 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wash-label-mat-pn {
+  white-space: normal;
+  word-break: break-all;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.wash-label-right {
+  text-align: center;
+}
+
+.wash-label-no-mat {
+  font-size: 9px;
+  color: #bbbbbb;
+}
+
+/* 底部品牌电话和地址 */
+.wash-label-footer {
+  border-top: 1px solid #eeeeee;
+  padding-top: 3px;
+  margin-top: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 10.5px;
+  color: #333333;
+  flex-shrink: 0;
+}
+
+.wash-label-footer-row {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.wash-label-footer-lbl {
+  color: #777777;
+  white-space: nowrap;
+}
+
+.wash-label-val-foot {
+  font-weight: 600;
+  color: #1a1a1a;
+  word-break: break-all;
+}
+</style>
+
+
