@@ -11,7 +11,7 @@
         <span class="text-base font-semibold">加工单预览</span>
         <div class="flex gap-8px mr-24px">
           <el-tooltip content="打印 / 选择打印机 / 另存为PDF" placement="top">
-            <el-button type="primary" @click="handlePrint">
+            <el-button type="primary" :loading="qrLoading" :disabled="qrLoading" @click="handlePrint">
               <Icon icon="ep:printer" class="mr-4px" />打印
             </el-button>
           </el-tooltip>
@@ -20,7 +20,11 @@
     </template>
 
     <!-- 预览区：每个结构一页，宽100mm × 高120mm（比例 100:120） -->
-    <div style="background: #e8e8e8; padding: 20px; max-height: 78vh; overflow-y: auto;">
+    <div
+      v-loading="qrLoading"
+      element-loading-text="正在加载二维码..."
+      style="background: #e8e8e8; padding: 20px; max-height: 78vh; overflow-y: auto;"
+    >
       <template v-if="formData?.curtains?.length">
         <template v-for="(curtain, cIdx) in formData.curtains" :key="cIdx">
           <div
@@ -59,7 +63,7 @@
                   <div
                     v-else
                     style="width: 108px; height: 108px; border: 1px dashed #bbb; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 13px;"
-                  >二维码</div>
+                  >{{ qrLoading ? '正在加载...' : '二维码' }}</div>
                 </div>
               </div>
             </div>
@@ -187,6 +191,7 @@ const props = defineProps<{
 
 // ======================== 响应式状态 ========================
 const visible = ref(false)
+const qrLoading = ref(false)
 const formData = ref<FormDataType | null>(null)
 /** 每个结构的二维码信息，key 为 `${curtainIdx}-${structureIdx}` */
 const structureQrCodes = ref<Record<string, { url: string; code: string }>>({})
@@ -308,22 +313,37 @@ const open = async (data: FormDataType) => {
   formData.value = data
   visible.value = true
   structureQrCodes.value = {}
-  for (const [cIdx, curtain] of (data.curtains || []).entries()) {
-    for (const [sIdx, structure] of ((curtain as any).structures || []).entries()) {
-      const codeContent = JSON.stringify({
-        orderId: data.id,
-        orderNo: data.orderNo,
-        curtainId: curtain.id ?? cIdx + 1,
-        structureId: structure.id ?? sIdx + 1
-      })
-      const codeId = await BarcodeRegistryApi.create({
-        codeType: 'ORDER_QR',
-        targetRoute: '/pages-curtain/order/curtain-order-detail/curtain-item/index',
-        codeContent
-      })
-      const url = await QRCode.toDataURL(codeId, { width: 180, margin: 1 })
-      structureQrCodes.value[`${cIdx}-${sIdx}`] = { url, code: codeId }
+  qrLoading.value = true
+
+  try {
+    const tasks: Promise<void>[] = []
+    for (const [cIdx, curtain] of (data.curtains || []).entries()) {
+      for (const [sIdx, structure] of ((curtain as any).structures || []).entries()) {
+        tasks.push(
+          (async () => {
+            const codeContent = JSON.stringify({
+              orderId: data.id,
+              orderNo: data.orderNo,
+              curtainId: curtain.id ?? cIdx + 1,
+              structureId: structure.id ?? sIdx + 1
+            })
+            const codeId = await BarcodeRegistryApi.create({
+              codeType: 'ORDER_QR',
+              targetRoute: '/pages-curtain/order/curtain-order-detail/curtain-item/index',
+              codeContent
+            })
+            const url = await QRCode.toDataURL(codeId, { width: 180, margin: 1 })
+            structureQrCodes.value[`${cIdx}-${sIdx}`] = { url, code: codeId }
+          })()
+        )
+      }
     }
+    await Promise.all(tasks)
+  } catch (error) {
+    console.error('生成二维码失败', error)
+    ElMessage.error('二维码加载失败')
+  } finally {
+    qrLoading.value = false
   }
 }
 
@@ -336,6 +356,10 @@ defineExpose({ open })
  */
 const handlePrint = async () => {
   if (!formData.value) return
+  if (qrLoading.value) {
+    ElMessage.warning('正在加载二维码，请稍候...')
+    return
+  }
 
   const fd = formData.value
   const cName = customerName.value
