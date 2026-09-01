@@ -233,11 +233,13 @@ const open = async (data: FormDataType) => {
 
       for (const [sIdx, structure] of ((curtain as any).structures || []).entries()) {
         const attrs = buildAttrs(structure)
-        const materials = ((structure as any).materials || []).map((m: any) => ({
-          elementName: m.elementName || '',
-          productName: m.productName || '',
-          quantity: m.quantity,
-        }))
+        const materials = ((structure as any).materials || [])
+          .filter((m: any) => m.elementIsPrint !== false)
+          .map((m: any) => ({
+            elementName: m.elementName || '',
+            productName: m.productName || '',
+            quantity: m.quantity,
+          }))
 
         items.push({
           orderNo,
