@@ -87,15 +87,11 @@
                 <div v-else class="wash-label-no-mat">（无用料）</div>
               </div>
 
-              <!-- 底部品牌电话和地址 -->
+              <!-- 底部品牌电话 -->
               <div class="wash-label-footer">
                 <div class="wash-label-footer-row">
                   <span class="wash-label-footer-lbl">电话：</span>
                   <span class="wash-label-val-foot">{{ brandPhone }}</span>
-                </div>
-                <div class="wash-label-footer-row">
-                  <span class="wash-label-footer-lbl">地址：</span>
-                  <span class="wash-label-val-foot">{{ brandAddress }}</span>
                 </div>
               </div>
             </div>
@@ -312,7 +308,6 @@ const handlePrint = () => {
         <div class="wash-label-mats">${materialsHtml}</div>
         <div class="wash-label-footer">
           <div class="wash-label-footer-row"><span class="wash-label-footer-lbl">电话：</span><span class="wash-label-val-foot">${bPhone}</span></div>
-          <div class="wash-label-footer-row"><span class="wash-label-footer-lbl">地址：</span><span class="wash-label-val-foot">${bAddress}</span></div>
         </div>
       </div>`
   })
@@ -331,7 +326,7 @@ const handlePrint = () => {
       height: 120mm;
       min-height: 120mm;
       box-sizing: border-box;
-      padding: 2mm 2.5mm;
+      padding: 3mm 2.5mm;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -341,29 +336,30 @@ const handlePrint = () => {
     }
     .wash-label-card:last-child { page-break-after: auto; }
     .wash-label-brand { display: flex; flex-direction: column; gap: 4px; margin-bottom: 2mm; flex-shrink: 0; }
-    .wash-label-brand-line { border-top: 1px dashed #9a9a9a; }
-    .wash-label-brand-name { text-align: center; font-size: 16px; font-weight: 800; color: #111111; margin-top: 2px; }
-    .wash-label-info-row { display: flex; align-items: baseline; gap: 4px; line-height: 1.5; font-size: 12px; }
-    .wash-label-info-row.sep { border-bottom: 1px solid #eeeeee; padding-bottom: 2px; margin-bottom: 2px; }
-    .wash-label-lbl { color: #777777; white-space: nowrap; }
-    .wash-label-val { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .wash-label-attrs { margin-bottom: 2px; }
-    .wash-label-attrs .wash-label-info-row { font-size: 11px; line-height: 1.4; }
-    .wash-label-attrs .wash-label-val { font-weight: 600; }
-    .wash-label-mats { border-top: 1px solid #eeeeee; padding-top: 2px; }
-    .wash-label-mat-table { width: 100%; border: 1px dashed #bdbdbd; font-size: 10px; border-collapse: collapse; }
+    .wash-label-brand-line { border-top: 1px dashed #666666; }
+    .wash-label-brand-name { text-align: center; font-size: 20px; font-weight: 900; color: #000000; margin-top: 2px; }
+    .wash-label-info-row { display: flex; align-items: baseline; gap: 4px; line-height: 1.6; font-size: 14px; }
+    .wash-label-info-row.sep { border-bottom: 1px solid #cccccc; padding-bottom: 3px; margin-bottom: 3px; }
+    .wash-label-lbl { color: #555555; white-space: nowrap; font-size: 13.5px; }
+    .wash-label-val { font-weight: 800; color: #000000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+    .wash-label-attrs { margin-bottom: 3px; }
+    .wash-label-attrs .wash-label-info-row { font-size: 13px; line-height: 1.5; }
+    .wash-label-attrs .wash-label-lbl { font-size: 12.5px; }
+    .wash-label-attrs .wash-label-val { font-weight: 700; font-size: 13px; }
+    .wash-label-mats { border-top: 1px solid #cccccc; padding-top: 3px; margin-bottom: 3px; }
+    .wash-label-mat-table { width: 100%; border: 1px dashed #888888; font-size: 12px; border-collapse: collapse; }
     .wash-label-mat-head, .wash-label-mat-row { display: grid; grid-template-columns: 1.2fr 1.8fr 0.7fr; }
-    .wash-label-mat-head { background: #f7f7f7; color: #666666; font-weight: 600; border-bottom: 1px dashed #bdbdbd; }
-    .wash-label-mat-row { color: #333333; border-bottom: 1px dashed #d9d9d9; }
+    .wash-label-mat-head { background: #eeeeee; color: #111111; font-weight: 700; border-bottom: 1px dashed #888888; }
+    .wash-label-mat-row { color: #000000; border-bottom: 1px dashed #cccccc; font-weight: 600; }
     .wash-label-mat-row:last-child { border-bottom: none; }
-    .wash-label-mat-head span, .wash-label-mat-row span { padding: 1px 3px; overflow: hidden; text-overflow: ellipsis; }
-    .wash-label-mat-pn { white-space: normal; word-break: break-all; font-weight: 600; text-align: center; }
+    .wash-label-mat-head span, .wash-label-mat-row span { padding: 2px 3px; overflow: hidden; text-overflow: ellipsis; }
+    .wash-label-mat-pn { white-space: normal; word-break: break-all; font-weight: 700; text-align: center; }
     .wash-label-right { text-align: center; }
-    .wash-label-no-mat { font-size: 9px; color: #bbbbbb; }
-    .wash-label-footer { border-top: 1px solid #eeeeee; padding-top: 3px; margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 10.5px; color: #333333; }
-    .wash-label-footer-row { display: flex; align-items: baseline; gap: 2px; }
-    .wash-label-footer-lbl { color: #777777; white-space: nowrap; }
-    .wash-label-val-foot { font-weight: 600; color: #1a1a1a; word-break: break-all; }
+    .wash-label-no-mat { font-size: 11px; color: #888888; }
+    .wash-label-footer { border-top: 1px solid #cccccc; padding-top: 4px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #000000; }
+    .wash-label-footer-row { display: flex; align-items: baseline; gap: 2px; line-height: 1.4; }
+    .wash-label-footer-lbl { color: #555555; white-space: nowrap; font-size: 12px; }
+    .wash-label-val-foot { font-weight: 700; color: #000000; word-break: break-all; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -391,7 +387,7 @@ const handlePrint = () => {
   height: 120mm;
   min-height: 120mm;
   box-sizing: border-box;
-  padding: 2mm 2.5mm;
+  padding: 3mm 2.5mm;
   background: #ffffff;
   color: #1a1a1a;
   font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
@@ -413,65 +409,66 @@ const handlePrint = () => {
   flex-shrink: 0;
 }
 .wash-label-brand-line {
-  border-top: 1px dashed #9a9a9a;
+  border-top: 1px dashed #666666;
 }
 .wash-label-brand-name {
   text-align: center;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 900;
   line-height: 1.1;
-  color: #111111;
+  color: #000000;
   margin-top: 2px;
 }
 .wash-label-info-row {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  line-height: 1.5;
-  font-size: 12px;
+  line-height: 1.6;
+  font-size: 14px;
   flex-shrink: 0;
 }
 .wash-label-info-row.sep {
-  border-bottom: 1px solid #eeeeee;
-  padding-bottom: 2px;
-  margin-bottom: 2px;
+  border-bottom: 1px solid #cccccc;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
 }
 .wash-label-lbl {
-  color: #777777;
+  color: #555555;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 .wash-label-val {
-  font-weight: 700;
+  font-weight: 800;
+  color: #000000;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 14px;
 }
 .wash-label-attrs {
   flex-shrink: 0;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 .wash-label-attrs .wash-label-info-row {
-  font-size: 11px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.5;
 }
 .wash-label-attrs .wash-label-lbl {
-  font-size: 11px;
+  font-size: 12.5px;
 }
 .wash-label-attrs .wash-label-val {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
 }
 .wash-label-mats {
-  border-top: 1px solid #eeeeee;
-  padding-top: 2px;
-  margin-bottom: 2px;
+  border-top: 1px solid #cccccc;
+  padding-top: 3px;
+  margin-bottom: 3px;
 }
 .wash-label-mat-table {
   width: 100%;
-  border: 1px dashed #bdbdbd;
-  font-size: 10.5px;
+  border: 1px dashed #888888;
+  font-size: 12px;
   border-collapse: collapse;
 }
 .wash-label-mat-head,
@@ -480,70 +477,66 @@ const handlePrint = () => {
   grid-template-columns: 1.2fr 1.8fr 0.7fr;
 }
 .wash-label-mat-head {
-  background: #f7f7f7;
-  color: #666666;
-  font-weight: 600;
-  border-bottom: 1px dashed #bdbdbd;
+  background: #eeeeee;
+  color: #111111;
+  font-weight: 700;
+  border-bottom: 1px dashed #888888;
 }
 .wash-label-mat-row {
-  color: #333333;
-  border-bottom: 1px dashed #d9d9d9;
+  color: #000000;
+  font-weight: 600;
+  border-bottom: 1px dashed #cccccc;
 }
 .wash-label-mat-row:last-child {
   border-bottom: none;
 }
 .wash-label-mat-head span,
 .wash-label-mat-row span {
-  padding: 1px 3px;
+  padding: 2px 3px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .wash-label-mat-pn {
   white-space: normal;
   word-break: break-all;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   text-align: center;
 }
-
 .wash-label-right {
   text-align: center;
 }
-
 .wash-label-no-mat {
-  font-size: 9px;
-  color: #bbbbbb;
+  font-size: 11px;
+  color: #888888;
 }
-
-/* 底部品牌电话和地址 */
 .wash-label-footer {
-  border-top: 1px solid #eeeeee;
-  padding-top: 3px;
-  margin-top: 3px;
+  border-top: 1px solid #cccccc;
+  padding-top: 4px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  font-size: 10.5px;
-  color: #333333;
+  gap: 2px;
+  font-size: 12px;
+  color: #000000;
   flex-shrink: 0;
 }
-
 .wash-label-footer-row {
   display: flex;
   align-items: baseline;
   gap: 2px;
-  line-height: 1.35;
+  line-height: 1.4;
 }
-
 .wash-label-footer-lbl {
-  color: #777777;
+  color: #555555;
   white-space: nowrap;
+  font-size: 12px;
 }
-
 .wash-label-val-foot {
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: 700;
+  color: #000000;
   word-break: break-all;
+  font-size: 12px;
 }
 </style>
 
