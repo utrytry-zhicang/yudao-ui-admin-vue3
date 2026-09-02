@@ -229,7 +229,7 @@
         </el-form-item>
         <!-- 备注 6：剩余空间较多，撑满 -->
         <el-form-item label="备注" prop="note" style="flex: 6; min-width: 0">
-          <el-input v-model="formData.note" placeholder="请输入备注" class="w-full" />
+          <el-input v-model="formData.note" placeholder="请输入备注" class="w-full" :input-style="{ color: '#DC2626' }" />
         </el-form-item>
       </div>
     </el-form>
