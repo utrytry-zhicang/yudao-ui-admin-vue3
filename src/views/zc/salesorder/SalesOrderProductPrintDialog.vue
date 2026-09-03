@@ -87,7 +87,7 @@
             </span>
             <span><b>订单号：</b>{{ formData?.orderNo || '-' }}</span>
           </div>
-          <div>
+          <div style="color: #DC2626; font-weight: bold;">
             <b>备注：</b>{{ formData?.note || '-' }}
           </div>
         </div>
@@ -432,7 +432,7 @@ const handlePrint = () => {
       <span><b>物流：</b>${lName}</span>
       <span><b>订单号：</b>${fd.orderNo || '-'}</span>
     </div>
-    <div><b>备注：</b>${fd.note || '-'}</div>
+    <div style="color: #DC2626; font-weight: bold;"><b>备注：</b>${fd.note || '-'}</div>
   </div>
   <div style="border-top:1px solid #000;margin:6px 0 8px;"></div>
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
