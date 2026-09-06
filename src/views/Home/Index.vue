@@ -30,6 +30,13 @@
     </el-col>
   </el-row>
 
+  <!-- 当日员工工序用料统计 -->
+  <el-row class="mt-8px" :gutter="8">
+    <el-col :span="24" class="mb-4px">
+      <HomeTodayUserMaterialStatistics />
+    </el-col>
+  </el-row>
+
   <!-- 统计区域：订单统计与用料统计共用时间筛选 -->
   <el-row class="mt-8px" :gutter="8">
     <el-col :span="24" class="mb-8px">
@@ -100,6 +107,7 @@ import { pieOptions, barOptions } from './echarts-data'
 import { useRouter } from 'vue-router'
 import HomeSalesOrderStatistics from './HomeSalesOrderStatistics.vue'
 import HomeMaterialStatistics from './HomeMaterialStatistics.vue'
+import HomeTodayUserMaterialStatistics from './HomeTodayUserMaterialStatistics.vue'
 import {
   homeStatisticsTimeRangeOptions,
   useHomeStatisticsTimeRange
