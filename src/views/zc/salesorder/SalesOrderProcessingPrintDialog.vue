@@ -8,11 +8,30 @@
   <el-dialog v-model="visible" width="860px" top="2vh" :close-on-click-modal="false">
     <template #header>
       <div class="flex items-center justify-between w-full">
-        <span class="text-base font-semibold">加工单预览</span>
+        <div class="flex items-center gap-12px">
+          <span class="text-base font-semibold">加工单预览</span>
+          <div v-if="allKeys.length > 0" class="flex items-center gap-8px ml-12px bg-gray-100 px-10px py-4px rounded">
+            <el-checkbox
+              v-model="checkAll"
+              :indeterminate="isIndeterminate"
+              @change="handleCheckAllChange"
+            >
+              全选
+            </el-checkbox>
+            <span class="text-xs text-gray-500">
+              (已选 {{ selectedKeys.length }}/{{ allKeys.length }} 项)
+            </span>
+          </div>
+        </div>
         <div class="flex gap-8px mr-24px">
-          <el-tooltip content="打印 / 选择打印机 / 另存为PDF" placement="top">
-            <el-button type="primary" :loading="qrLoading" :disabled="qrLoading" @click="handlePrint">
-              <Icon icon="ep:printer" class="mr-4px" />打印
+          <el-tooltip content="打印选中的加工单 / 选择打印机 / 另存为PDF" placement="top">
+            <el-button
+              type="primary"
+              :loading="qrLoading"
+              :disabled="qrLoading || selectedKeys.length === 0"
+              @click="handlePrint"
+            >
+              <Icon icon="ep:printer" class="mr-4px" />打印 ({{ selectedKeys.length }})
             </el-button>
           </el-tooltip>
         </div>
@@ -30,122 +49,157 @@
           <div
             v-for="(structure, sIdx) in curtain.structures"
             :key="sIdx"
-            style="
-              background: white;
-              width: 100mm;
-              height: 120mm;
-              margin: 0 auto 20px;
-              padding: 3px 14px 12px;
-              box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 4px #f00, 0 2px 12px rgba(0,0,0,0.2);
-              font-size: 17px;
-              color: #1a1a1a;
-              font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
-              overflow: hidden;
-              box-sizing: border-box;
-            "
+            style="width: 100mm; margin: 0 auto 20px; transition: all 0.2s;"
           >
-            <!-- 抬头：标题单独占第一行，二维码和信息在下方 -->
-            <div style="margin-bottom: 3px;">
-              <div style="font-size: 18px; letter-spacing: 2px; text-align: center; margin-bottom: 3px; line-height: 1.2;">
-                {{ brandName ? brandName + ' ' : '' }}加工单
+            <!-- 选框与顶部分栏条 -->
+            <div
+              class="flex items-center justify-between px-10px py-6px rounded-t cursor-pointer select-none"
+              :style="{
+                background: selectedKeys.includes(`${cIdx}-${sIdx}`) ? '#1D4ED8' : '#6B7280',
+                color: '#ffffff'
+              }"
+              @click="toggleKeySelect(`${cIdx}-${sIdx}`)"
+            >
+              <div class="flex items-center gap-8px">
+                <el-checkbox
+                  :model-value="selectedKeys.includes(`${cIdx}-${sIdx}`)"
+                  @change="() => toggleKeySelect(`${cIdx}-${sIdx}`)"
+                  @click.stop
+                />
+                <span class="text-sm font-semibold">
+                  加工单 第{{ cIdx + 1 }}-{{ sIdx + 1 }}套 ({{ curtain.room || '无房间' }})
+                </span>
               </div>
-              <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <div style="flex: 1; min-width: 0;">
-                  <div style="padding: 2px 0; font-size: 13px;">订单号：{{ formData?.orderNo || '-' }}</div>
-                  <div style="padding: 2px 0; font-size: 13px;">客户：{{ customerName }}</div>
-                  <div style="padding: 2px 0; font-size: 13px;">房间：</div>
-                  <div v-if="formData?.note" style="padding: 2px 0; font-size: 13px;">备注：{{ formData.note }}</div>
-                </div>
-                <div style="width: 123px; flex-shrink: 0; text-align: center;">
-                  <template v-if="structureQrCodes[`${cIdx}-${sIdx}`]">
-                    <img :src="structureQrCodes[`${cIdx}-${sIdx}`].url" width="108" height="108" style="display: block; margin: 0 auto;" />
-                  </template>
-                  <div
-                    v-else
-                    style="width: 108px; height: 108px; border: 1px dashed #bbb; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 13px;"
-                  >{{ qrLoading ? '正在加载...' : '二维码' }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 分隔线 -->
-            <div style="border-top: 1px solid #ccc; margin: 3px 0 5px;"></div>
-
-            <!-- 结构信息横条：左结构名，中房间，右套数 -->
-            <div style="border: 3px solid #1D4ED8; background: #EFF6FF; padding: 4px 8px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-              <span style="font-size: 12px; color: #1D4ED8; white-space: nowrap; font-weight: 600;">
-                {{ getStructureName(structure.structureId) || (structure as any).structureName || '-' }}
-              </span>
-              <span style="font-size: 12px; white-space: nowrap; flex: 1; text-align: center;">
-                <span style="font-size: 10px; color: #6B7280;">房间：</span>{{ curtain.room || '-' }}
-              </span>
-              <span style="font-size: 12px; color: #1D4ED8; white-space: nowrap;">
-                第{{ cIdx + 1 }}-{{ sIdx + 1 }}套 / 共{{ formData?.curtains?.length || 0 }}套
+              <span class="text-xs opacity-90 font-medium">
+                {{ selectedKeys.includes(`${cIdx}-${sIdx}`) ? '已选中' : '未选中' }}
               </span>
             </div>
 
-            <!-- 结构信息 - 3列表格 -->
-            <table style="width: 100%; border-collapse: collapse; border: 2px solid #111827; background: #F9FAFB; color: #374151; margin-bottom: 4px; font-size: 14px;">
-              <tbody>
-                <tr v-for="(row, rowIdx) in chunkAttrs(structure, 3)" :key="rowIdx">
-                  <td v-for="(cell, cellIdx) in row" :key="cellIdx" :colspan="cell.colspan || 1" style="border: 1px solid #4B5563; padding: 4px 6px; width: 33.33%; vertical-align: middle;">
-                    <template v-if="cell.labeledValues?.length">
-                      <template v-for="(part, pi) in cell.labeledValues" :key="pi">
-                        <span v-if="pi > 0"> | </span>
-                        <span style="font-size: 10px; color: #6B7280; white-space: nowrap;">{{ part.label }}：</span>
-                        <span style="font-size: 14px; font-weight: 500">{{ part.value }}</span>
+            <!-- 卡片内容区域 -->
+            <div
+              :style="{
+                background: 'white',
+                width: '100mm',
+                height: '120mm',
+                padding: '3px 14px 12px',
+                boxShadow: selectedKeys.includes(`${cIdx}-${sIdx}`)
+                  ? 'inset 0 0 0 3px #fff, inset 0 0 0 4px #f00, 0 2px 12px rgba(0,0,0,0.2)'
+                  : '0 2px 8px rgba(0,0,0,0.1)',
+                fontSize: '17px',
+                color: '#1a1a1a',
+                fontFamily: '\'Microsoft YaHei\', \'微软雅黑\', Arial, sans-serif',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                opacity: selectedKeys.includes(`${cIdx}-${sIdx}`) ? 1 : 0.4,
+                filter: selectedKeys.includes(`${cIdx}-${sIdx}`) ? 'none' : 'grayscale(70%)',
+                borderRadius: '0 0 4px 4px',
+                cursor: 'pointer'
+              }"
+              @click="toggleKeySelect(`${cIdx}-${sIdx}`)"
+            >
+              <!-- 抬头：标题单独占第一行，二维码和信息在下方 -->
+              <div style="margin-bottom: 3px;">
+                <div style="font-size: 18px; letter-spacing: 2px; text-align: center; margin-bottom: 3px; line-height: 1.2;">
+                  {{ brandName ? brandName + ' ' : '' }}加工单
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="padding: 2px 0; font-size: 13px;">订单号：{{ formData?.orderNo || '-' }}</div>
+                    <div style="padding: 2px 0; font-size: 13px;">客户：{{ customerName }}</div>
+                    <div style="padding: 2px 0; font-size: 13px;">房间：</div>
+                    <div v-if="formData?.note" style="padding: 2px 0; font-size: 13px;">备注：{{ formData.note }}</div>
+                  </div>
+                  <div style="width: 123px; flex-shrink: 0; text-align: center;">
+                    <template v-if="structureQrCodes[`${cIdx}-${sIdx}`]">
+                      <img :src="structureQrCodes[`${cIdx}-${sIdx}`].url" width="108" height="108" style="display: block; margin: 0 auto;" />
+                    </template>
+                    <div
+                      v-else
+                      style="width: 108px; height: 108px; border: 1px dashed #bbb; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 13px;"
+                    >{{ qrLoading ? '正在加载...' : '二维码' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 分隔线 -->
+              <div style="border-top: 1px solid #ccc; margin: 3px 0 5px;"></div>
+
+              <!-- 结构信息横条：左结构名，中房间，右套数 -->
+              <div style="border: 3px solid #1D4ED8; background: #EFF6FF; padding: 4px 8px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span style="font-size: 12px; color: #1D4ED8; white-space: nowrap; font-weight: 600;">
+                  {{ getStructureName(structure.structureId) || (structure as any).structureName || '-' }}
+                </span>
+                <span style="font-size: 12px; white-space: nowrap; flex: 1; text-align: center;">
+                  <span style="font-size: 10px; color: #6B7280;">房间：</span>{{ curtain.room || '-' }}
+                </span>
+                <span style="font-size: 12px; color: #1D4ED8; white-space: nowrap;">
+                  第{{ cIdx + 1 }}-{{ sIdx + 1 }}套 / 共{{ formData?.curtains?.length || 0 }}套
+                </span>
+              </div>
+
+              <!-- 结构信息 - 3列表格 -->
+              <table style="width: 100%; border-collapse: collapse; border: 2px solid #111827; background: #F9FAFB; color: #374151; margin-bottom: 4px; font-size: 14px;">
+                <tbody>
+                  <tr v-for="(row, rowIdx) in chunkAttrs(structure, 3)" :key="rowIdx">
+                    <td v-for="(cell, cellIdx) in row" :key="cellIdx" :colspan="cell.colspan || 1" style="border: 1px solid #4B5563; padding: 4px 6px; width: 33.33%; vertical-align: middle;">
+                      <template v-if="cell.labeledValues?.length">
+                        <template v-for="(part, pi) in cell.labeledValues" :key="pi">
+                          <span v-if="pi > 0"> | </span>
+                          <span style="font-size: 10px; color: #6B7280; white-space: nowrap;">{{ part.label }}：</span>
+                          <span style="font-size: 14px; font-weight: 500">{{ part.value }}</span>
+                        </template>
                       </template>
-                    </template>
-                    <template v-else>
-                      <span
-                        v-if="!cell.noLabel"
-                        :style="cell.isDim ? 'font-size: 13px; color: #000; white-space: nowrap;' : 'font-size: 10px; color: #6B7280; white-space: nowrap;'"
-                      >{{ cell.label }}：</span>
-                      <span
-                        :style="cell.isDim ? 'font-size: 18px; font-weight: 500; color: #000;' : (cell.smallValue ? 'font-size: 14px; font-weight: 500' : 'font-size: 16px; font-weight: 500')"
-                      >{{ cell.value }}</span>
-                    </template>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                      <template v-else>
+                        <span
+                          v-if="!cell.noLabel"
+                          :style="cell.isDim ? 'font-size: 13px; color: #000; white-space: nowrap;' : 'font-size: 10px; color: #6B7280; white-space: nowrap;'"
+                        >{{ cell.label }}：</span>
+                        <span
+                          :style="cell.isDim ? 'font-size: 18px; font-weight: 500; color: #000;' : (cell.smallValue ? 'font-size: 14px; font-weight: 500' : 'font-size: 16px; font-weight: 500')"
+                        >{{ cell.value }}</span>
+                      </template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
-            <!-- 用料表：仅展示 elementIsPrint !== false 的行 -->
-            <table
-              v-if="(structure as any).materials?.filter((m: any) => m.elementIsPrint !== false).length"
-              style="width: 100%; border-collapse: collapse; font-size: 14px;"
-            >
-              <thead>
-                <tr style="background: #F3F4F6;">
-                  <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">组件类型</th>
-                  <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">货号</th>
-                  <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">规格</th>
-                  <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: right;">用料</th>
-                  <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">备注</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(material, mIdx) in (structure as any).materials?.filter((m: any) => m.elementIsPrint !== false)" :key="mIdx">
-                  <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ getElementName(material.elementId) || material.elementName || '-' }}</td>
-                  <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.productName || '-' }}</td>
-                  <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.spec || '-' }}</td>
-                  <td style="border: 1px solid #4B5563; padding: 3px 5px; text-align: right; font-weight: 500; font-size: 16px; color: #000;">{{ material.quantity ?? '-' }}</td>
-                  <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.note || '' }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div
-              v-if="!(structure as any).materials?.filter((m: any) => m.elementIsPrint !== false).length"
-              style="padding: 3px 8px; color: #9CA3AF; border: 1px solid #D1D5DB;"
-            >
-              （无用料）
-            </div>
-            <!-- 款式备注 + 结构备注放最下方，用 | 分隔 -->
-            <div
-              v-if="formatCurtainStructureNote(curtain.note, structure.note)"
-              style="margin-top: 4px; padding: 3px 8px; font-size: 14px; border: 1px solid #D1D5DB; background: #FFFBEB;"
-            >
-              <span style="color: #6B7280;">款式备注：</span>{{ formatCurtainStructureNote(curtain.note, structure.note) }}
+              <!-- 用料表：仅展示 elementIsPrint !== false 的行 -->
+              <table
+                v-if="(structure as any).materials?.filter((m: any) => m.elementIsPrint !== false).length"
+                style="width: 100%; border-collapse: collapse; font-size: 14px;"
+              >
+                <thead>
+                  <tr style="background: #F3F4F6;">
+                    <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">组件类型</th>
+                    <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">货号</th>
+                    <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">规格</th>
+                    <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: right;">用料</th>
+                    <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(material, mIdx) in (structure as any).materials?.filter((m: any) => m.elementIsPrint !== false)" :key="mIdx">
+                    <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ getElementName(material.elementId) || material.elementName || '-' }}</td>
+                    <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.productName || '-' }}</td>
+                    <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.spec || '-' }}</td>
+                    <td style="border: 1px solid #4B5563; padding: 3px 5px; text-align: right; font-weight: 500; font-size: 16px; color: #000;">{{ material.quantity ?? '-' }}</td>
+                    <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ material.note || '' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div
+                v-if="!(structure as any).materials?.filter((m: any) => m.elementIsPrint !== false).length"
+                style="padding: 3px 8px; color: #9CA3AF; border: 1px solid #D1D5DB;"
+              >
+                （无用料）
+              </div>
+              <!-- 款式备注 + 结构备注放最下方，用 | 分隔 -->
+              <div
+                v-if="formatCurtainStructureNote(curtain.note, structure.note)"
+                style="margin-top: 4px; padding: 3px 8px; font-size: 14px; border: 1px solid #D1D5DB; background: #FFFBEB;"
+              >
+                <span style="color: #6B7280;">款式备注：</span>{{ formatCurtainStructureNote(curtain.note, structure.note) }}
+              </div>
             </div>
           </div>
         </template>
@@ -195,6 +249,57 @@ const qrLoading = ref(false)
 const formData = ref<FormDataType | null>(null)
 /** 每个结构的二维码信息，key 为 `${curtainIdx}-${structureIdx}` */
 const structureQrCodes = ref<Record<string, { url: string; code: string }>>({})
+
+/** 选中的结构 key 集合（`${cIdx}-${sIdx}`） */
+const selectedKeys = ref<string[]>([])
+
+/** 所有结构的 key 集合 */
+const allKeys = computed(() => {
+  const keys: string[] = []
+  if (!formData.value?.curtains) return keys
+  for (const [cIdx, curtain] of formData.value.curtains.entries()) {
+    for (const [sIdx] of (curtain.structures || []).entries()) {
+      keys.push(`${cIdx}-${sIdx}`)
+    }
+  }
+  return keys
+})
+
+/** 全选 computed */
+const checkAll = computed({
+  get: () => allKeys.value.length > 0 && selectedKeys.value.length === allKeys.value.length,
+  set: (val: boolean) => {
+    if (val) {
+      selectedKeys.value = [...allKeys.value]
+    } else {
+      selectedKeys.value = []
+    }
+  }
+})
+
+/** 半选状态 */
+const isIndeterminate = computed(() => {
+  return selectedKeys.value.length > 0 && selectedKeys.value.length < allKeys.value.length
+})
+
+/** 处理全选切换 */
+const handleCheckAllChange = (val: boolean | string | number) => {
+  if (val) {
+    selectedKeys.value = [...allKeys.value]
+  } else {
+    selectedKeys.value = []
+  }
+}
+
+/** 切换单个结构的选中状态 */
+const toggleKeySelect = (key: string) => {
+  const index = selectedKeys.value.indexOf(key)
+  if (index > -1) {
+    selectedKeys.value.splice(index, 1)
+  } else {
+    selectedKeys.value.push(key)
+  }
+}
 
 // ======================== 计算属性 ========================
 const customerName = computed(() => {
@@ -315,6 +420,15 @@ const open = async (data: FormDataType) => {
   structureQrCodes.value = {}
   qrLoading.value = true
 
+  // 默认全选所有结构的加工单
+  const keys: string[] = []
+  for (const [cIdx, curtain] of (data.curtains || []).entries()) {
+    for (const [sIdx] of ((curtain as any).structures || []).entries()) {
+      keys.push(`${cIdx}-${sIdx}`)
+    }
+  }
+  selectedKeys.value = keys
+
   try {
     const tasks: Promise<void>[] = []
     for (const [cIdx, curtain] of (data.curtains || []).entries()) {
@@ -360,6 +474,10 @@ const handlePrint = async () => {
     ElMessage.warning('正在加载二维码，请稍候...')
     return
   }
+  if (selectedKeys.value.length === 0) {
+    ElMessage.warning('请至少选择一个加工单进行打印')
+    return
+  }
 
   const fd = formData.value
   const cName = customerName.value
@@ -391,11 +509,15 @@ const handlePrint = async () => {
     `
   }
 
-  // 遍历每个窗帘下的每个结构，生成独立页面
+  // 遍历每个窗帘下的每个结构，仅为选中的结构生成独立页面
   const pages: string[] = []
   for (const [cIdx, curtain] of (fd.curtains || []).entries()) {
     const ctnName = getCurtainName(curtain.curtainId) || (curtain as any).curtainName || '-'
     for (const [sIdx, structure] of ((curtain as any).structures || []).entries()) {
+      const key = `${cIdx}-${sIdx}`
+      if (!selectedKeys.value.includes(key)) {
+        continue
+      }
       // 窗帘标题行（依赖 sIdx，必须在内层循环里构建）
       const lC = 'font-size:8pt;color:#6B7280;white-space:nowrap;'
       const strName = getStructureName(structure.structureId) || structure.structureName || '-'

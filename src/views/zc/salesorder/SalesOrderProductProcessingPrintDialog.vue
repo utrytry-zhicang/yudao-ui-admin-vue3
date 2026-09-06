@@ -7,11 +7,30 @@
   <el-dialog v-model="visible" width="860px" top="2vh" :close-on-click-modal="false">
     <template #header>
       <div class="flex items-center justify-between w-full">
-        <span class="text-base font-semibold">面料加工单预览</span>
+        <div class="flex items-center gap-12px">
+          <span class="text-base font-semibold">面料加工单预览</span>
+          <div v-if="printableBatchIndices.length > 0" class="flex items-center gap-8px ml-12px bg-gray-100 px-10px py-4px rounded">
+            <el-checkbox
+              v-model="checkAll"
+              :indeterminate="isIndeterminate"
+              @change="handleCheckAllChange"
+            >
+              全选
+            </el-checkbox>
+            <span class="text-xs text-gray-500">
+              (已选 {{ selectedBatchIndices.length }}/{{ printableBatchIndices.length }} 项)
+            </span>
+          </div>
+        </div>
         <div class="flex gap-8px mr-24px">
-          <el-tooltip content="打印 / 选择打印机 / 另存为PDF" placement="top">
-            <el-button type="primary" :loading="qrLoading" :disabled="qrLoading" @click="handlePrint">
-              <Icon icon="ep:printer" class="mr-4px" />打印
+          <el-tooltip content="打印选中的面料加工项 / 选择打印机 / 另存为PDF" placement="top">
+            <el-button
+              type="primary"
+              :loading="qrLoading"
+              :disabled="qrLoading || selectedBatchIndices.length === 0"
+              @click="handlePrint"
+            >
+              <Icon icon="ep:printer" class="mr-4px" />打印 ({{ selectedBatchIndices.length }})
             </el-button>
           </el-tooltip>
         </div>
@@ -69,6 +88,9 @@
         <table style="width: 100%; border-collapse: collapse; font-size: 11pt; margin-top: 2px;">
           <thead>
             <tr style="background: #F3F4F6;">
+              <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: center; width: 36px;">
+                <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" @change="handleCheckAllChange" />
+              </th>
               <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: center;">序号</th>
               <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">货号</th>
               <th style="border: 1px solid #4B5563; padding: 3px 5px; text-align: left;">规格</th>
@@ -77,13 +99,27 @@
           </thead>
           <tbody>
             <template v-for="(batch, idx) in formData?.batchs?.filter((b) => b.elementIsPrint !== false)" :key="idx">
-              <tr>
+              <tr
+                :style="{
+                  opacity: selectedBatchIndices.includes(idx) ? 1 : 0.4,
+                  background: selectedBatchIndices.includes(idx) ? '#fff' : '#f9fafb',
+                  cursor: 'pointer'
+                }"
+                @click="toggleBatchSelect(idx)"
+              >
+                <td style="border: 1px solid #4B5563; padding: 3px 5px; text-align: center;" @click.stop>
+                  <el-checkbox
+                    :model-value="selectedBatchIndices.includes(idx)"
+                    @change="() => toggleBatchSelect(idx)"
+                  />
+                </td>
                 <td style="border: 1px solid #4B5563; padding: 3px 5px; text-align: center;">{{ idx + 1 }}</td>
                 <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ batch.productName || '-' }}</td>
                 <td style="border: 1px solid #4B5563; padding: 3px 5px;">{{ batch.spec || '-' }}</td>
                 <td style="border: 1px solid #4B5563; padding: 3px 5px; text-align: right; font-weight: bold; font-size: 14pt; color: #000;">{{ formatMaterialQuantity(batch) }}</td>
               </tr>
               <tr v-if="batch.note">
+                <td style="border: 1px solid #4B5563; padding: 3px 5px; width: 36px;"></td>
                 <td style="border: 1px solid #4B5563; padding: 3px 5px; width: 34px;"></td>
                 <td colspan="3" style="border: 1px solid #4B5563; padding: 3px 5px; color: #6B7280; font-size: 10pt;">
                   备注：{{ batch.note }}
@@ -154,6 +190,54 @@ const formData = ref<FormDataType | null>(null)
 /** 整单二维码信息 */
 const orderQrCode = ref<{ url: string; code: string } | null>(null)
 
+/** 选中的加工批次索引列表 */
+const selectedBatchIndices = ref<number[]>([])
+
+/** 可打印的面料批次索引列表 */
+const printableBatchIndices = computed(() => {
+  if (!formData.value?.batchs) return []
+  return formData.value.batchs
+    .map((b, idx) => ({ b, idx }))
+    .filter(({ b }) => b.elementIsPrint !== false)
+    .map(({ idx }) => idx)
+})
+
+/** 全选 computed */
+const checkAll = computed({
+  get: () => printableBatchIndices.value.length > 0 && selectedBatchIndices.value.length === printableBatchIndices.value.length,
+  set: (val: boolean) => {
+    if (val) {
+      selectedBatchIndices.value = [...printableBatchIndices.value]
+    } else {
+      selectedBatchIndices.value = []
+    }
+  }
+})
+
+/** 半选状态 */
+const isIndeterminate = computed(() => {
+  return selectedBatchIndices.value.length > 0 && selectedBatchIndices.value.length < printableBatchIndices.value.length
+})
+
+/** 全选切换处理 */
+const handleCheckAllChange = (val: boolean | string | number) => {
+  if (val) {
+    selectedBatchIndices.value = [...printableBatchIndices.value]
+  } else {
+    selectedBatchIndices.value = []
+  }
+}
+
+/** 切换单个批次选中状态 */
+const toggleBatchSelect = (idx: number) => {
+  const index = selectedBatchIndices.value.indexOf(idx)
+  if (index > -1) {
+    selectedBatchIndices.value.splice(index, 1)
+  } else {
+    selectedBatchIndices.value.push(idx)
+  }
+}
+
 // ======================== 计算属性 ========================
 /** 客户显示名 */
 const customerName = computed(() => {
@@ -184,6 +268,14 @@ const open = async (data: FormDataType) => {
   visible.value = true
   orderQrCode.value = null
   qrLoading.value = true
+
+  // 默认全选所有可打印的加工批次
+  const indices = (data.batchs || [])
+    .map((b, idx) => ({ b, idx }))
+    .filter(({ b }) => b.elementIsPrint !== false)
+    .map(({ idx }) => idx)
+  selectedBatchIndices.value = indices
+
   try {
     const codeId = await BarcodeRegistryApi.create({
       codeType: 'ORDER_QR',
@@ -214,6 +306,10 @@ const handlePrint = async () => {
     ElMessage.warning('正在加载二维码，请稍候...')
     return
   }
+  if (selectedBatchIndices.value.length === 0) {
+    ElMessage.warning('请至少选择一个面料加工项进行打印')
+    return
+  }
 
   const fd = formData.value
   const cName = customerName.value
@@ -222,7 +318,9 @@ const handlePrint = async () => {
   const thS = 'border:1px solid #4B5563;padding:3px 5px;'
   const tdS = 'border:1px solid #4B5563;padding:3px 5px;'
 
-  const batchRowsHtml = (fd.batchs || []).filter((b) => b.elementIsPrint !== false).map((b, idx) => `
+  const batchRowsHtml = (fd.batchs || [])
+    .filter((b, idx) => b.elementIsPrint !== false && selectedBatchIndices.value.includes(idx))
+    .map((b, idx) => `
     <tr>
       <td style="${tdS}text-align:center;">${idx + 1}</td>
       <td style="${tdS}">${b.productName || '-'}</td>
