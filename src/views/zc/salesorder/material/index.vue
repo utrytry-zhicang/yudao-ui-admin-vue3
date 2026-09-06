@@ -12,13 +12,24 @@
       :inline="true"
       label-width="80px"
     >
+      <el-form-item label="创建时间" prop="createTime">
+        <el-date-picker
+          v-model="queryParams.createTime"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          type="daterange"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+          class="!w-240px"
+        />
+      </el-form-item>
       <el-form-item label="客户" prop="customerId">
         <el-select
           v-model="queryParams.customerId"
-          placeholder="请选择客户"
+          placeholder="请选择"
           clearable
           filterable
-          class="!w-240px"
+          class="!w-120px"
         >
           <el-option
             v-for="item in customerList"
@@ -31,10 +42,10 @@
       <el-form-item label="产品版本" prop="versionId">
         <el-select
           v-model="queryParams.versionId"
-          placeholder="请选择产品版本"
+          placeholder="请选择"
           clearable
           filterable
-          class="!w-240px"
+          class="!w-120px"
         >
           <el-option
             v-for="item in versionList"
@@ -44,16 +55,21 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="创建时间" prop="createTime">
-        <el-date-picker
-          v-model="queryParams.createTime"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-240px"
-        />
+      <el-form-item label="组件类型" prop="elementId">
+        <el-select
+          v-model="queryParams.elementId"
+          placeholder="请选择"
+          clearable
+          filterable
+          class="!w-120px"
+        >
+          <el-option
+            v-for="item in elementList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
@@ -91,7 +107,6 @@
       <el-table-column label="规格" align="center" prop="spec" />
       <el-table-column label="单价" align="center" prop="price" />
       <el-table-column label="用料" align="center" prop="quantity" />
-      <el-table-column label="单位" align="center" prop="unitValue" />
       <el-table-column label="小计" align="center" prop="amount" min-width="120px" />
       <el-table-column label="裁剪数量" align="center" prop="cutQuantity" />
       <el-table-column label="配料状态" align="center" prop="status">
@@ -109,13 +124,6 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column
-        label="更新时间"
-        align="center"
-        prop="updateTime"
-        :formatter="dateFormatter"
-        width="180px"
-      />
     </el-table>
     <!-- 分页 -->
     <Pagination
@@ -129,7 +137,7 @@
 
 <script setup lang="ts">
 // ======================== 导入与声明 ========================
-import { dateFormatter } from '@/utils/formatTime'
+import { dateFormatter, beginOfDay, endOfDay, formatDate } from '@/utils/formatTime'
 import download from '@/utils/download'
 import type { TableColumnCtx } from 'element-plus'
 import {
@@ -139,6 +147,7 @@ import {
 } from '@/api/zc/salesorder/material'
 import { CustomerApi, CustomerSimpleVO } from '@/api/zc/customer'
 import { ProductVersionApi, ProductVersionSimpleVO } from '@/api/zc/productversion'
+import { CurtainStructureElementApi, CurtainStructureElementSimpleVO } from '@/api/zc/curtainstructureelement'
 
 /** 成品订单-用料明细 列表 */
 defineOptions({ name: 'ZCSalesOrderMaterial' })
@@ -157,12 +166,18 @@ const totalAmount = ref(0)
 const customerList = ref<CustomerSimpleVO[]>([])
 /** 产品版本下拉选项 */
 const versionList = ref<ProductVersionSimpleVO[]>([])
+/** 组件类型下拉选项 */
+const elementList = ref<CurtainStructureElementSimpleVO[]>([])
 const queryParams = reactive({
   pageNo: 1,
   pageSize: 10,
+  createTime: [
+    formatDate(beginOfDay(new Date())),
+    formatDate(endOfDay(new Date()))
+  ],
   customerId: undefined,
   versionId: undefined,
-  createTime: []
+  elementId: undefined
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
@@ -172,6 +187,7 @@ const exportLoading = ref(false) // 导出的加载中
 onMounted(async () => {
   customerList.value = await CustomerApi.getCustomerSimpleList()
   versionList.value = await ProductVersionApi.getProductVersionSimpleList()
+  elementList.value = await CurtainStructureElementApi.getCurtainStructureElementSimpleList()
   await getList()
 })
 
@@ -244,3 +260,11 @@ const handleExport = async () => {
   }
 }
 </script>
+
+<style scoped>
+:deep(.el-table__footer-wrapper td.el-table__cell) {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  font-weight: bold;
+}
+</style>
