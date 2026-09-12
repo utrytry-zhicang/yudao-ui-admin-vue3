@@ -48,7 +48,13 @@
           >
             <div class="process-subsection__title">
               <Icon icon="ep:grid" class="mr-1" />
-              {{ structure.structureName || `结构 #${structure.structureId}` }}
+              <span>{{ structure.structureName || `结构 #${structure.structureId}` }}</span>
+              <span
+                v-if="structure.width != null || structure.height != null"
+                class="ml-2 text-red-500 font-bold"
+              >
+                （宽：{{ structure.width ?? '-' }} 高：{{ structure.height ?? '-' }}）
+              </span>
             </div>
 
             <ProcessRecordTimeline
