@@ -175,6 +175,7 @@
         :stripe="true"
         :show-overflow-tooltip="true"
         class="cursor-pointer"
+        :row-class-name="tableRowClassName"
         @selection-change="handleRowCheckboxChange"
         @row-dblclick="handleRowDblClick"
     >
@@ -250,15 +251,16 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="操作" align="center" min-width="80px" fixed="right">
+      <el-table-column label="操作" align="center" min-width="120px" fixed="right">
         <template #default="scope">
           <el-button
+            v-if="scope.row.status !== 'DISCARDED'"
             link
-            type="danger"
-            @click="handleDelete(scope.row.id, scope.row.types)"
-            v-hasPermi="['zc:sales-order:delete']"
+            type="warning"
+            @click="handleDiscard(scope.row.id)"
+            v-hasPermi="['zc:sales-order:update']"
           >
-            删除
+            废弃
           </el-button>
         </template>
       </el-table-column>
@@ -406,6 +408,10 @@ const openProductForm = (type: string, id?: number) => {
 
 /** 编辑按钮：根据订单类型打开对应表单 */
 const handleEdit = (row: SalesOrder) => {
+  if (row.status === 'DISCARDED') {
+    message.warning('废弃订单禁止查看')
+    return
+  }
   if (row.types === SalesOrderType.FABRIC) {
     openProductForm('update', row.id)
   } else {
@@ -415,8 +421,22 @@ const handleEdit = (row: SalesOrder) => {
 
 /** 双击行：与编辑按钮一致，按订单类型打开成品单/面料单编辑弹窗 */
 const handleRowDblClick = (row: SalesOrder) => {
+  if (row.status === 'DISCARDED') {
+    message.warning('废弃订单禁止查看')
+    return
+  }
   if (!checkPermi(['zc:sales-order:update'])) return
   handleEdit(row)
+}
+
+/** 废弃按钮操作 */
+const handleDiscard = async (id: number) => {
+  try {
+    await message.confirm('确认废弃该销售订单吗？')
+    await SalesOrderApi.discardSalesOrder(id)
+    message.success('废弃成功')
+    await getList()
+  } catch {}
 }
 
 /** 打开新增收款弹窗 */
@@ -467,6 +487,14 @@ const openProcessRecordDialog = (orderId: number) => {
   processRecordDialogRef.value?.open(orderId)
 }
 
+/** 废弃订单整行高亮标红样式 */
+const tableRowClassName = ({ row }: { row: SalesOrder }) => {
+  if (row.status === 'DISCARDED') {
+    return 'discarded-row'
+  }
+  return ''
+}
+
 /** 初始化 **/
 onMounted(async () => {
   ;[brandsList.value, logisticsList.value, installProcessList.value] = await Promise.all([
@@ -477,3 +505,14 @@ onMounted(async () => {
   await getList()
 })
 </script>
+
+<style scoped>
+:deep(.el-table .discarded-row) {
+  background-color: var(--el-color-danger-light-9) !important;
+  color: var(--el-color-danger) !important;
+}
+:deep(.el-table .discarded-row td.el-table__cell) {
+  background-color: var(--el-color-danger-light-9) !important;
+  color: var(--el-color-danger) !important;
+}
+</style>

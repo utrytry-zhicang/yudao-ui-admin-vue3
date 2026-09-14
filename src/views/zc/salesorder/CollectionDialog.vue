@@ -160,7 +160,7 @@
           border
           @selection-change="handleSelectionChange"
         >
-          <el-table-column type="selection" width="45" />
+          <el-table-column type="selection" :selectable="(row) => row.status !== 'DISCARDED'" width="45" />
           <el-table-column label="结算状态" prop="payStatus" width="100" align="center">
             <template #default="{ row }">
               <dict-tag :type="DICT_TYPE.ZC_ORDER_PAY_STATUS" :value="row.payStatus" />
@@ -384,7 +384,7 @@ const handleCustomerChange = async (customerId: number | undefined) => {
       payStatus: ['unpaid', 'partialpaid'],
       isConfirm: true
     })
-    orderList.value = data.list ?? []
+    orderList.value = (data.list ?? []).filter((o) => o.status !== 'DISCARDED')
   } finally {
     ordersLoading.value = false
   }

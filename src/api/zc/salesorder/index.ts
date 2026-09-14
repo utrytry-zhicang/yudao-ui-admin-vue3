@@ -298,6 +298,17 @@ export const SalesOrderApi = {
   },
 
   /**
+   * 废弃销售订单
+   * 对应后端：PUT /zc/sales-order/discard?id=xxx
+   *
+   * @param id 销售订单 ID
+   * @returns 是否成功
+   */
+  discardSalesOrder: async (id: number) => {
+    return await request.put({ url: `/zc/sales-order/discard`, params: { id } })
+  },
+
+  /**
    * 标记销售订单为加急
    * 对应后端：PUT /zc/sales-order/expedited?orderId=xxx
    *
