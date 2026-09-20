@@ -374,6 +374,14 @@ export const SalesOrderApi = {
       url: `/zc/sales-order/statistics/material-product`,
       params: { confirmTime }
     })
+  },
+
+  /**
+   * 获得今日需要发货的客户数
+   * 对应后端：GET /zc/sales-order/today-delivery-customer-count
+   */
+  getTodayDeliveryCustomerCount: async (): Promise<number> => {
+    return await request.get({ url: `/zc/sales-order/today-delivery-customer-count` })
   }
 }
 

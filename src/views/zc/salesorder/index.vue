@@ -44,15 +44,26 @@
         />
       </el-form-item>
       <el-form-item label="交付日期" prop="deliveryDate">
-        <el-date-picker
-          v-model="queryParams.deliveryDate"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-220px"
-        />
+        <div class="flex items-center gap-8px">
+          <el-date-picker
+            v-model="queryParams.deliveryDate"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            class="!w-220px"
+          />
+          <el-tag
+            type="danger"
+            effect="light"
+            class="cursor-pointer hover:opacity-80 transition-opacity font-bold select-none"
+            @click="handleFilterTodayDelivery"
+            title="点击直接筛选交付日期等于今天的订单"
+          >
+            今日需发货客户数：{{ todayDeliveryCustomerCount }}
+          </el-tag>
+        </div>
       </el-form-item>
       <el-form-item label="结算状态" prop="payStatus">
         <el-select
@@ -293,7 +304,7 @@
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import { getStrDictOptions, DICT_TYPE } from '@/utils/dict'
 import { isEmpty } from '@/utils/is'
-import { dateFormatter } from '@/utils/formatTime'
+import { dateFormatter, beginOfDay, endOfDay, formatDate } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { SalesOrderApi, SalesOrderProductApi, SalesOrderType, SalesOrder } from '@/api/zc/salesorder'
 import type { Customer } from '@/api/zc/customer'
@@ -321,6 +332,7 @@ const customerInput = ref('')
 const brandsList = ref<BrandSimpleVO[]>([]) // 品牌列表
 const logisticsList = ref<LogisticsSimpleVO[]>([]) // 物流列表
 const installProcessList = ref<CurtainInstallProcessSimpleVO[]>([]) // 安装工艺列表
+const todayDeliveryCustomerCount = ref<number>(0) // 今日需发货客户数
 
 const brandIdMap = computed(() =>
   Object.fromEntries(brandsList.value.map((item) => [item.id, item.name]))
@@ -495,6 +507,24 @@ const tableRowClassName = ({ row }: { row: SalesOrder }) => {
   return ''
 }
 
+/** 今日需发货客户数获取 **/
+const getTodayDeliveryCustomerCount = async () => {
+  try {
+    todayDeliveryCustomerCount.value = await SalesOrderApi.getTodayDeliveryCustomerCount()
+  } catch (e) {
+    console.error('获取今日需发货客户数失败', e)
+  }
+}
+
+/** 点击筛选交付日期等于今天的订单 */
+const handleFilterTodayDelivery = () => {
+  queryParams.deliveryDate = [
+    formatDate(beginOfDay(new Date())),
+    formatDate(endOfDay(new Date()))
+  ]
+  handleQuery()
+}
+
 /** 初始化 **/
 onMounted(async () => {
   ;[brandsList.value, logisticsList.value, installProcessList.value] = await Promise.all([
@@ -502,6 +532,7 @@ onMounted(async () => {
     LogisticsApi.getLogisticsSimpleList(),
     CurtainInstallProcessApi.getCurtainInstallProcessSimpleList(),
   ])
+  await getTodayDeliveryCustomerCount()
   await getList()
 })
 </script>
