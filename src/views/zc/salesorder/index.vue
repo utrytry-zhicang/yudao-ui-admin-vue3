@@ -499,10 +499,13 @@ const openProcessRecordDialog = (orderId: number) => {
   processRecordDialogRef.value?.open(orderId)
 }
 
-/** 废弃订单整行高亮标红样式 */
+/** 订单整行样式：废弃订单重度标红，今日交付订单提示黄色 */
 const tableRowClassName = ({ row }: { row: SalesOrder }) => {
   if (row.status === 'DISCARDED') {
     return 'discarded-row'
+  }
+  if (row.deliveryDate && formatDate(row.deliveryDate, 'YYYY-MM-DD') === formatDate(new Date(), 'YYYY-MM-DD')) {
+    return 'today-delivery-row'
   }
   return ''
 }
@@ -545,5 +548,11 @@ onMounted(async () => {
 :deep(.el-table .discarded-row td.el-table__cell) {
   background-color: var(--el-color-danger-light-9) !important;
   color: var(--el-color-danger) !important;
+}
+:deep(.el-table .today-delivery-row) {
+  background-color: var(--el-color-warning-light-9) !important;
+}
+:deep(.el-table .today-delivery-row td.el-table__cell) {
+  background-color: var(--el-color-warning-light-9) !important;
 }
 </style>
