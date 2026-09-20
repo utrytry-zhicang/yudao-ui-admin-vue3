@@ -46,12 +46,48 @@
           clearable
           filterable
           class="!w-120px"
+          @change="handleVersionChange"
+          @clear="handleVersionChange"
         >
           <el-option
             v-for="item in versionList"
             :key="item.id"
             :label="item.name"
             :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="queryParams.productId"
+          :placeholder="queryParams.versionId ? '请选择' : '请先选择产品版本'"
+          :disabled="!queryParams.versionId"
+          clearable
+          filterable
+          class="!w-140px"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="规格" prop="spec">
+        <el-select
+          v-model="queryParams.spec"
+          :placeholder="queryParams.versionId ? '请选择' : '请先选择产品版本'"
+          :disabled="!queryParams.versionId"
+          clearable
+          filterable
+          class="!w-120px"
+        >
+          <el-option
+            v-for="item in specList"
+            :key="item"
+            :label="item"
+            :value="item"
           />
         </el-select>
       </el-form-item>
@@ -147,6 +183,7 @@ import {
 } from '@/api/zc/salesorder/material'
 import { CustomerApi, CustomerSimpleVO } from '@/api/zc/customer'
 import { ProductVersionApi, ProductVersionSimpleVO } from '@/api/zc/productversion'
+import { ProductApi, ProductSimpleVO } from '@/api/zc/product'
 import { CurtainStructureElementApi, CurtainStructureElementSimpleVO } from '@/api/zc/curtainstructureelement'
 
 /** 成品订单-用料明细 列表 */
@@ -166,6 +203,10 @@ const totalAmount = ref(0)
 const customerList = ref<CustomerSimpleVO[]>([])
 /** 产品版本下拉选项 */
 const versionList = ref<ProductVersionSimpleVO[]>([])
+/** 产品下拉选项 */
+const productList = ref<ProductSimpleVO[]>([])
+/** 规格下拉选项 */
+const specList = ref<string[]>([])
 /** 组件类型下拉选项 */
 const elementList = ref<CurtainStructureElementSimpleVO[]>([])
 const queryParams = reactive({
@@ -177,6 +218,8 @@ const queryParams = reactive({
   ],
   customerId: undefined,
   versionId: undefined,
+  productId: undefined,
+  spec: undefined,
   elementId: undefined
 })
 const queryFormRef = ref() // 搜索的表单
@@ -192,6 +235,28 @@ onMounted(async () => {
 })
 
 // ======================== 数据获取 ========================
+/** 当选择或变更产品版本时，联动更新产品和规格选项 */
+const handleVersionChange = async () => {
+  queryParams.productId = undefined
+  queryParams.spec = undefined
+  productList.value = []
+  specList.value = []
+
+  if (!queryParams.versionId) {
+    return
+  }
+
+  // 1. 获取对应的产品下拉列表
+  productList.value = await ProductApi.getProductSimpleList({ versionId: queryParams.versionId })
+
+  // 2. 从产品版本列表中，寻找当前选中版本的规格列表
+  const selectedVersion = versionList.value.find((v) => v.id === queryParams.versionId)
+  if (selectedVersion?.specConfs && selectedVersion.specConfs.length > 0) {
+    const specs = selectedVersion.specConfs.map((item) => item.spec).filter(Boolean)
+    specList.value = Array.from(new Set(specs))
+  }
+}
+
 /**
  * 表格合计行：最左显示「合计」，用料/小计列仅展示数值
  * （使用接口全量合计，非当前页求和）
@@ -242,6 +307,7 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value.resetFields()
+  handleVersionChange()
   handleQuery()
 }
 
