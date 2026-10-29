@@ -15,8 +15,8 @@ export interface NodeStatItem {
   materials: MaterialStatItem[]
 }
 
-/** 当日员工节点用料统计 VO */
-export interface ZcOrderProcessRecordTodayUserMaterialRespVO {
+/** 指定时间范围内的员工节点用料统计 VO */
+export interface ZcOrderProcessRecordUserMaterialRespVO {
   masterId: number
   masterName: string
   nodeStats: NodeStatItem[]
@@ -25,14 +25,14 @@ export interface ZcOrderProcessRecordTodayUserMaterialRespVO {
 /** 订单工序记录 API */
 export const OrderProcessRecordApi = {
   /**
-   * 获取当日所有员工对应节点的用料统计
+   * 获取指定时间范围内所有员工对应节点的用料统计
    * GET /zc/order-process-record/today-user-material-stat
    */
-  getTodayUserMaterialStat: async (params?: {
-    beginCreateTime?: string
-    endCreateTime?: string
+  getUserMaterialStat: async (params: {
+    beginCreateTime: string // 统计开始时间，格式：YYYY-MM-DD HH:mm:ss
+    endCreateTime: string // 统计结束时间，格式：YYYY-MM-DD HH:mm:ss
   }) => {
-    return await request.get<ZcOrderProcessRecordTodayUserMaterialRespVO[]>({
+    return await request.get<ZcOrderProcessRecordUserMaterialRespVO[]>({
       url: `/zc/order-process-record/today-user-material-stat`,
       params
     })

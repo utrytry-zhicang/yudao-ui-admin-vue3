@@ -1,6 +1,6 @@
 <!--
-  首页 - 当日员工工序节点用料统计
-  功能：展示当日所有车间员工在对应工序节点上的工序次数与用料统计明细
+  首页 - 员工工序节点用料统计
+  功能：按今日、昨日、当周或当月展示车间员工的工序次数与用料统计明细
   使用方：views/Home/Index.vue（快捷入口下方）
 -->
 <template>
@@ -9,12 +9,21 @@
       <div class="flex flex-wrap items-center justify-between gap-12px">
         <div class="flex items-center gap-8px">
           <Icon icon="ep:avatar" class="text-20px text-primary" />
-          <span class="text-16px font-medium">当日员工工序用料统计</span>
+          <span class="text-16px font-medium">员工工序用料统计</span>
           <el-tag size="small" type="info" round class="ml-4px">
             共 {{ filteredList.length }} 位员工
           </el-tag>
         </div>
-        <div class="flex items-center gap-8px">
+        <div class="flex flex-wrap items-center justify-end gap-8px">
+          <el-radio-group v-model="timeRangeType" size="default" @change="handleTimeRangeChange">
+            <el-radio-button
+              v-for="item in timeRangeOptions"
+              :key="item.value"
+              :value="item.value"
+            >
+              {{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
           <el-input
             v-model="searchKeyword"
             placeholder="搜索员工姓名/工序节点..."
@@ -43,7 +52,7 @@
       <template #default>
         <el-empty
           v-if="!loading && filteredList.length === 0"
-          description="当日暂无员工工序用料统计数据"
+          :description="`${currentTimeRangeLabel}暂无员工工序用料统计数据`"
           :image-size="80"
         />
 
@@ -74,7 +83,7 @@
                 size="small"
                 effect="light"
               >
-                {{ user.nodeStats && user.nodeStats.length > 0 ? '当日有工序' : '未产生工序' }}
+                {{ user.nodeStats && user.nodeStats.length > 0 ? `${currentTimeRangeLabel}有工序` : '未产生工序' }}
               </el-tag>
             </div>
 
@@ -123,7 +132,7 @@
 
             <!-- 无工序记录 -->
             <div v-else class="text-12px text-gray-400 text-center py-16px bg-white dark:bg-gray-800 rounded-8px border border-dashed border-gray-200 dark:border-gray-700">
-              今日暂无该员工对应节点的加工用料记录
+              {{ currentTimeRangeLabel }}暂无该员工对应节点的加工用料记录
             </div>
           </div>
         </div>
@@ -134,20 +143,43 @@
 
 <script setup lang="ts">
 // ======================== 导入与声明 ========================
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import dayjs from 'dayjs'
+import { getDateRange } from '@/utils/formatTime'
 import {
   OrderProcessRecordApi,
-  type ZcOrderProcessRecordTodayUserMaterialRespVO
+  type ZcOrderProcessRecordUserMaterialRespVO
 } from '@/api/zc/orderprocessrecord'
 
 defineOptions({ name: 'HomeTodayUserMaterialStatistics' })
 
 // ======================== 响应式状态 ========================
+enum TimeRangeTypeEnum {
+  TODAY = 'today',
+  YESTERDAY = 'yesterday',
+  WEEK = 'week',
+  MONTH = 'month'
+}
+
+/** 卡片支持的时间范围快捷选项 */
+const timeRangeOptions = [
+  { label: '今日', value: TimeRangeTypeEnum.TODAY },
+  { label: '昨日', value: TimeRangeTypeEnum.YESTERDAY },
+  { label: '当周', value: TimeRangeTypeEnum.WEEK },
+  { label: '当月', value: TimeRangeTypeEnum.MONTH }
+]
+
 const loading = ref(false)
-const list = ref<ZcOrderProcessRecordTodayUserMaterialRespVO[]>([])
+const list = ref<ZcOrderProcessRecordUserMaterialRespVO[]>([])
 const searchKeyword = ref('')
+const timeRangeType = ref<TimeRangeTypeEnum>(TimeRangeTypeEnum.TODAY)
 
 // ======================== 计算属性 ========================
+/** 当前时间范围标签，用于空状态与员工状态提示 */
+const currentTimeRangeLabel = computed(
+  () => timeRangeOptions.find((item) => item.value === timeRangeType.value)?.label || '当前范围'
+)
+
 /** 过滤后的员工列表 */
 const filteredList = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
@@ -172,17 +204,44 @@ const formatQuantity = (val: number) => {
   return Number.isInteger(val) ? String(val) : val.toFixed(2)
 }
 
-/** 加载当日员工节点用料统计 */
+/** 根据当前快捷选项计算完整的日期时间边界 */
+const resolveTimeRange = (): [string, string] => {
+  const now = dayjs()
+  switch (timeRangeType.value) {
+    case TimeRangeTypeEnum.YESTERDAY: {
+      const yesterday = now.subtract(1, 'day')
+      return getDateRange(yesterday, yesterday)
+    }
+    case TimeRangeTypeEnum.WEEK:
+      return getDateRange(now.startOf('week'), now.endOf('week'))
+    case TimeRangeTypeEnum.MONTH:
+      return getDateRange(now.startOf('month'), now.endOf('month'))
+    case TimeRangeTypeEnum.TODAY:
+    default:
+      return getDateRange(now, now)
+  }
+}
+
+/** 加载指定时间范围内的员工节点用料统计 */
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await OrderProcessRecordApi.getTodayUserMaterialStat()
+    const [beginCreateTime, endCreateTime] = resolveTimeRange()
+    const res = await OrderProcessRecordApi.getUserMaterialStat({
+      beginCreateTime,
+      endCreateTime
+    })
     list.value = res || []
   } catch {
     list.value = []
   } finally {
     loading.value = false
   }
+}
+
+/** 切换快捷时间范围后重新查询统计数据 */
+const handleTimeRangeChange = () => {
+  fetchData()
 }
 
 // ======================== 生命周期 ========================

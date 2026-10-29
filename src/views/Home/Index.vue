@@ -30,7 +30,7 @@
     </el-col>
   </el-row>
 
-  <!-- 当日员工工序用料统计 -->
+  <!-- 员工工序用料统计（支持快捷时间范围筛选） -->
   <el-row class="mt-8px" :gutter="8">
     <el-col :span="24" class="mb-4px">
       <HomeTodayUserMaterialStatistics />
