@@ -1,6 +1,6 @@
 <!--
   首页 - 员工工序节点用料统计
-  功能：按今日、昨日、当周或当月展示车间员工的工序次数与用料统计明细
+  功能：支持快捷日期与自定义时间范围，展示车间员工的工序次数与用料统计明细
   使用方：views/Home/Index.vue（快捷入口下方）
 -->
 <template>
@@ -24,6 +24,16 @@
               {{ item.label }}
             </el-radio-button>
           </el-radio-group>
+          <el-date-picker
+            v-model="customTimes"
+            type="daterange"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
+            class="w-240px!"
+            @change="handleCustomDateChange"
+          />
           <el-input
             v-model="searchKeyword"
             placeholder="搜索员工姓名/工序节点..."
@@ -158,7 +168,8 @@ enum TimeRangeTypeEnum {
   TODAY = 'today',
   YESTERDAY = 'yesterday',
   WEEK = 'week',
-  MONTH = 'month'
+  MONTH = 'month',
+  CUSTOM = 'custom'
 }
 
 /** 卡片支持的时间范围快捷选项 */
@@ -173,11 +184,13 @@ const loading = ref(false)
 const list = ref<ZcOrderProcessRecordUserMaterialRespVO[]>([])
 const searchKeyword = ref('')
 const timeRangeType = ref<TimeRangeTypeEnum>(TimeRangeTypeEnum.TODAY)
+/** 日期选择器当前展示的时间范围，默认与“今日”保持一致 */
+const customTimes = ref<[string, string]>(getDateRange(dayjs(), dayjs()))
 
 // ======================== 计算属性 ========================
 /** 当前时间范围标签，用于空状态与员工状态提示 */
 const currentTimeRangeLabel = computed(
-  () => timeRangeOptions.find((item) => item.value === timeRangeType.value)?.label || '当前范围'
+  () => timeRangeOptions.find((item) => item.value === timeRangeType.value)?.label || '指定范围'
 )
 
 /** 过滤后的员工列表 */
@@ -216,6 +229,8 @@ const resolveTimeRange = (): [string, string] => {
       return getDateRange(now.startOf('week'), now.endOf('week'))
     case TimeRangeTypeEnum.MONTH:
       return getDateRange(now.startOf('month'), now.endOf('month'))
+    case TimeRangeTypeEnum.CUSTOM:
+      return customTimes.value
     case TimeRangeTypeEnum.TODAY:
     default:
       return getDateRange(now, now)
@@ -239,8 +254,19 @@ const fetchData = async () => {
   }
 }
 
-/** 切换快捷时间范围后重新查询统计数据 */
+/** 切换快捷时间范围：同步日期选择器并重新查询统计数据 */
 const handleTimeRangeChange = () => {
+  customTimes.value = resolveTimeRange()
+  fetchData()
+}
+
+/** 选择自定义日期范围后立即按指定范围查询 */
+const handleCustomDateChange = (value: [string, string] | null) => {
+  if (!value || value.length !== 2) {
+    return
+  }
+  timeRangeType.value = TimeRangeTypeEnum.CUSTOM
+  customTimes.value = value
   fetchData()
 }
 
