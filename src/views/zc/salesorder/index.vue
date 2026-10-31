@@ -222,6 +222,12 @@
       <el-table-column label="交付日期" align="center" prop="deliveryDate" width="110px">
         <template #default="scope">{{ scope.row.deliveryDate?.substring(0, 10) }}</template>
       </el-table-column>
+      <!-- 备注紧跟交付日期展示，并使用红色突出提醒信息 -->
+      <el-table-column label="备注" align="center" prop="note" min-width="160px">
+        <template #default="scope">
+          <span class="text-red-500">{{ scope.row.note || '-' }}</span>
+        </template>
+      </el-table-column>
 
 
       <el-table-column label="是否加急" align="center" prop="isExpedited">
@@ -254,7 +260,6 @@
         width="180px"
       />
 
-      <el-table-column label="备注" align="center" prop="note" />
       <el-table-column
         label="创建时间"
         align="center"
