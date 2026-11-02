@@ -114,6 +114,10 @@
             <span style="font-size: 14px; color: #111; font-weight: 700; white-space: nowrap;">发货信息确认联</span>
             <span style="font-size: 14px; white-space: nowrap; color: #111; font-weight: 700;"><span style="font-size: 12px; color: #111; font-weight: 700;">打印日期：</span>{{ printDate }}</span>
           </div>
+          <div style="margin-top: 6px; font-size: 13px; line-height: 1.5; color: #555;">
+            品牌电话：{{ brandDetail?.mobile || '-' }}<br />
+            品牌地址：{{ brandDetail?.address || '-' }}
+          </div>
         </div>
       </template>
 
@@ -129,7 +133,8 @@
 import QRCode from 'qrcode'
 import { BarcodeRegistryApi } from '@/api/zc/barcodeRegistry'
 import type { CustomerSimpleVO } from '@/api/zc/customer'
-import type { BrandSimpleVO } from '@/api/zc/brand'
+import type { Brand, BrandSimpleVO } from '@/api/zc/brand'
+import { BrandApi } from '@/api/zc/brand'
 import type { LogisticsSimpleVO } from '@/api/zc/logistics'
 import type { SalesOrder } from '@/api/zc/salesorder'
 
@@ -147,6 +152,8 @@ const props = defineProps<{
 const visible = ref(false)
 const formData = ref<SalesOrder | null>(null)
 /** 发货模式：'curtain' = 合并结构发货, 'order' = 合并发货 */
+/** 当前订单关联品牌的详细信息，用于展示品牌电话和地址 */
+const brandDetail = ref<Brand | null>(null)
 const shippingType = ref<'curtain' | 'order'>('order')
 /** 每个结构页的二维码信息，key 为 `${curtainIdx}-${structureIdx}` 或 `order-merged` */
 const structureQrCodes = ref<Record<string, { url: string; code: string }>>({})
@@ -271,9 +278,11 @@ const generateStructureQrCodes = async (data: SalesOrder) => {
  * 打开预览弹窗，注册并生成发货二维码
  * 二维码内容保留订单维度信息，便于后续按单追溯发货记录
  */
-const open = async (data: SalesOrder) => {
+  const open = async (data: SalesOrder) => {
   shippingType.value = 'order'
   formData.value = data
+  // 发货联需要展示订单当前关联品牌的最新联系方式
+  brandDetail.value = data.brandId ? await BrandApi.getBrand(data.brandId) : null
   visible.value = true
   await generateStructureQrCodes(data)
 }
@@ -335,6 +344,7 @@ const handlePrint = () => {
       <span style="font-size:12pt;color:#111;font-weight:700;white-space:nowrap;">发货信息确认联</span>
       <span style="font-size:12pt;white-space:nowrap;color:#111;font-weight:700;"><span style="font-size:10pt;color:#111;font-weight:700;">打印日期：</span>${printDate.value}</span>
     </div>
+    <div style="margin-top:6px;font-size:10pt;line-height:1.5;color:#555;">品牌电话：${brandDetail.value?.mobile || '-'}<br>品牌地址：${brandDetail.value?.address || '-'}</div>
   </div>`
       }
     )

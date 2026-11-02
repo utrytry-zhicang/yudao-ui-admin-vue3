@@ -89,6 +89,14 @@
               <td style="color: #666; white-space: nowrap; padding-right: 16px;">打印日期</td>
               <td style="font-weight: 600;">{{ slipData.printDate }}</td>
             </tr>
+            <tr>
+              <td style="color: #666; white-space: nowrap; padding-right: 16px;">品牌电话</td>
+              <td style="font-weight: 600;">{{ slipData.brandMobile || '-' }}</td>
+            </tr>
+            <tr>
+              <td style="color: #666; white-space: nowrap; padding-right: 16px; vertical-align: top;">品牌地址</td>
+              <td style="font-weight: 600; word-break: break-all;">{{ slipData.brandAddress || '-' }}</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -100,6 +108,7 @@
 // ======================== 导入与声明 ========================
 import QRCode from 'qrcode'
 import { BarcodeRegistryApi } from '@/api/zc/barcodeRegistry'
+import { BrandApi } from '@/api/zc/brand'
 import type { Customer } from '@/api/zc/customer'
 
 /** 客户发货联打印预览弹窗 */
@@ -110,6 +119,8 @@ interface SlipData {
   customerId: number | null
   customerName: string
   brandName: string
+  brandMobile: string
+  brandAddress: string
   logisticsName: string
   receiver: string
   mobile: string
@@ -125,6 +136,8 @@ const slipData = ref<SlipData>({
   customerId: null,
   customerName: '',
   brandName: '',
+  brandMobile: '',
+  brandAddress: '',
   logisticsName: '',
   receiver: '',
   mobile: '',
@@ -141,10 +154,13 @@ const todayStr = (): string => {
 // ======================== 对外方法 ========================
 /** 打开预览弹窗，传入客户行数据 */
 const open = async (data: Customer) => {
+  const brand = data.brandId ? await BrandApi.getBrand(data.brandId) : null
   slipData.value = {
     customerId: data.id ?? null,
     customerName: data.shortName || data.name || '-',
     brandName: data.brandName || '-',
+    brandMobile: brand?.mobile || '-',
+    brandAddress: brand?.address || '-',
     logisticsName: data.logisticName || '-',
     receiver: data.contactName || '-',
     mobile: data.mobile || '-',
@@ -239,11 +255,13 @@ const handlePrint = () => {
   <table>
     <tbody>
       <tr><td class="lbl">客户名称</td><td class="val">${d.customerName || '-'}</td></tr>
+      <tr><td class="lbl">打印日期</td><td class="val">${d.printDate}</td></tr>
+      <tr><td class="lbl">品牌电话</td><td class="val">${d.brandMobile || '-'}</td></tr>
+      <tr><td class="lbl" style="vertical-align:top;">品牌地址</td><td class="val">${d.brandAddress || '-'}</td></tr>
       <tr><td class="lbl">物流</td><td class="val">${d.logisticsName || '-'}</td></tr>
       <tr><td class="lbl">收货人</td><td class="val">${d.receiver || '-'}</td></tr>
       <tr><td class="lbl">电话</td><td class="val">${d.mobile || '-'}</td></tr>
       <tr><td class="lbl" style="vertical-align:top;padding-top:3pt;">收货地址</td><td class="val">${d.deliveryAddress || '-'}</td></tr>
-      <tr><td class="lbl">打印日期</td><td class="val">${d.printDate}</td></tr>
     </tbody>
   </table>
 </div>
