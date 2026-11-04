@@ -40,7 +40,7 @@
         "
       >
         <!-- 抬头：品牌 + 发货联 + 右上角二维码 -->
-        <div style="display: flex; align-items: flex-start; margin-bottom: 28px; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; margin-bottom: 9px; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px;">
           <div style="flex: 1; min-width: 0;">
             <div style="text-align: center;">
               <div style="font-size: 21px; font-weight: 700; letter-spacing: 2px; margin-top: 4px; line-height: 1.1;">
@@ -63,38 +63,38 @@
         </div>
 
         <!-- 信息列表 -->
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.8;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6;">
           <tbody>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px; width: 120px;">客户名称</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">客户名称</td>
               <td style="font-weight: 600;">{{ slipData.customerName || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px;">物流</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">物流</td>
               <td style="font-weight: 600;">{{ slipData.logisticsName || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px;">收货人</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">收货人</td>
               <td style="font-weight: 600;">{{ slipData.receiver || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px;">电话</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">电话</td>
               <td style="font-weight: 600;">{{ slipData.mobile || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px; vertical-align: top; padding-top: 4px;">收货地址</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px; vertical-align: top; padding-top: 3px;">收货地址</td>
               <td style="font-weight: 600; word-break: break-all;">{{ slipData.deliveryAddress || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px;">打印日期</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">打印日期</td>
               <td style="font-weight: 600;">{{ slipData.printDate }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px;">品牌电话</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px;">品牌电话</td>
               <td style="font-weight: 600;">{{ slipData.brandMobile || '-' }}</td>
             </tr>
             <tr>
-              <td style="color: #666; white-space: nowrap; padding-right: 16px; vertical-align: top;">品牌地址</td>
+              <td style="color: #666; white-space: nowrap; padding-right: 4px; width: 80px; vertical-align: top;">品牌地址</td>
               <td style="font-weight: 600; word-break: break-all;">{{ slipData.brandAddress || '-' }}</td>
             </tr>
           </tbody>
@@ -218,7 +218,7 @@ const handlePrint = () => {
       align-items: flex-start;
       border-bottom: 2pt solid #1a1a1a;
       padding-bottom: 10pt;
-      margin-bottom: 18pt;
+      margin-bottom: 6pt;
     }
     .header-main { flex: 1; min-width: 0; }
     .header-title-wrap { text-align: center; }
@@ -236,8 +236,8 @@ const handlePrint = () => {
       margin-top: 4pt;
     }
     .header-qr { width: 104pt; flex-shrink: 0; padding-left: 8pt; text-align: center; }
-    table { width: 100%; border-collapse: collapse; font-size: 13pt; line-height: 1.9; }
-    td.lbl { color: #555; white-space: nowrap; padding-right: 18pt; width: 105pt; }
+    table { width: 100%; border-collapse: collapse; font-size: 13pt; line-height: 1.65; }
+    td.lbl { color: #555; white-space: nowrap; padding-right: 5pt; width: 75pt; }
     td.val { font-weight: 600; word-break: break-all; }
   </style>
 </head>
@@ -255,13 +255,13 @@ const handlePrint = () => {
   <table>
     <tbody>
       <tr><td class="lbl">客户名称</td><td class="val">${d.customerName || '-'}</td></tr>
-      <tr><td class="lbl">打印日期</td><td class="val">${d.printDate}</td></tr>
-      <tr><td class="lbl">品牌电话</td><td class="val">${d.brandMobile || '-'}</td></tr>
-      <tr><td class="lbl" style="vertical-align:top;">品牌地址</td><td class="val">${d.brandAddress || '-'}</td></tr>
       <tr><td class="lbl">物流</td><td class="val">${d.logisticsName || '-'}</td></tr>
       <tr><td class="lbl">收货人</td><td class="val">${d.receiver || '-'}</td></tr>
       <tr><td class="lbl">电话</td><td class="val">${d.mobile || '-'}</td></tr>
       <tr><td class="lbl" style="vertical-align:top;padding-top:3pt;">收货地址</td><td class="val">${d.deliveryAddress || '-'}</td></tr>
+      <tr><td class="lbl">打印日期</td><td class="val">${d.printDate}</td></tr>
+      <tr><td class="lbl">品牌电话</td><td class="val">${d.brandMobile || '-'}</td></tr>
+      <tr><td class="lbl" style="vertical-align:top;">品牌地址</td><td class="val">${d.brandAddress || '-'}</td></tr>
     </tbody>
   </table>
 </div>
